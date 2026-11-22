@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Git Guides 複習筆記</title>
+<meta name="description" content="GitHub 官方 Git Guides 的繁體中文重點整理：init、clone、add、commit、remote、status、pull、push。">
+<link rel="icon" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  :root{--bg:#faf7f2;--ink:#1f2328;--muted:#5b6470;--line:#e4ddd2;--card:#fff;--accent:#d1495b;--green:#2a9d8f;--blue:#3a6ea5;--yellow:#e9b44c;--purple:#7b5ea7;--code:#1e2430}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.75;font-size:16px}
+  header{background:var(--code);color:#fff;padding:48px 24px 36px}
+  header .wrap{max-width:900px;margin:auto}
+  header h1{font-size:34px;margin:0 0 8px}
+  header p{color:#c9d1d9;margin:0}
+  nav{position:sticky;top:0;background:#fffdf9ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);z-index:10}
+  nav .wrap{max-width:900px;margin:auto;display:flex;gap:6px;overflow-x:auto;padding:10px 24px}
+  nav a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:14px;padding:4px 10px;border-radius:20px}
+  nav a:hover{background:#efe8dc;color:var(--ink)}
+  main{max-width:900px;margin:auto;padding:24px}
+  section{margin:44px 0;scroll-margin-top:60px}
+  h2{font-size:26px;margin:0 0 4px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  h2 code{background:var(--code);color:#7ee787;padding:2px 12px;border-radius:8px;font-size:22px}
+  .one{font-size:17px;margin:6px 0 14px;padding:12px 16px;background:#fff;border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:10px}
+  h3{font-size:18px;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:14px 0}
+  .tip{border-left:5px solid var(--green);background:#eef8f6}
+  .warn{border-left:5px solid var(--accent);background:#fdf0f1}
+  .mine{border-left:5px solid var(--purple);background:#f4f0fa}
+  .mine::before{content:"🧩 補充說明（原文沒有）";display:block;font-size:13px;font-weight:700;color:var(--purple);margin-bottom:4px}
+  .you{border-left:5px solid var(--yellow);background:#fdf7e8}
+  .you::before{content:"🔁 實際情境";display:block;font-size:13px;font-weight:700;color:#a07a1f;margin-bottom:4px}
+  pre{background:var(--code);color:#e6edf3;padding:14px 18px;border-radius:10px;overflow-x:auto;font-size:14.5px;line-height:1.6;margin:10px 0}
+  pre .c{color:#8b949e}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace}
+  p code,li code,td code{background:#efe8dc;padding:1px 6px;border-radius:5px;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:15px;background:#fff;border-radius:10px;overflow:hidden;margin:8px 0}
+  th,td{border-bottom:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f3ede3}
+  td.y{color:var(--green);font-weight:700;text-align:center} td.n{color:var(--accent);font-weight:700;text-align:center}
+  ul,ol{padding-left:22px}
+  .fig{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:16px 0}
+  svg{width:100%;height:auto;display:block}
+  .fig figcaption{text-align:center;color:var(--muted);font-size:14px;margin-top:6px}
+  .flip{display:flex;gap:10px;align-items:flex-start;margin:14px 0;background:#fff;border:1px dashed #c9bfae;border-radius:12px;padding:12px 16px}
+  .flip b{flex-shrink:0}
+  .flip .ans{display:none;color:var(--muted)}
+  .flip.open .ans{display:block}
+  .flip button{margin-left:auto;flex-shrink:0;border:1px solid var(--line);background:#faf7f2;border-radius:8px;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:13px}
+  .got{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);cursor:pointer;margin-left:auto;font-weight:400}
+  .got input{accent-color:var(--green);transform:scale(1.2)}
+  .bar{height:10px;background:#eee4d6;border-radius:10px;overflow:hidden;margin:8px 0}
+  .bar div{height:100%;background:var(--green);width:0;transition:width .3s}
+  .quiz button.opt{display:block;width:100%;text-align:left;margin:6px 0;padding:10px 14px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;font-size:15px;font-family:inherit}
+  .quiz button.right{background:#dff3ef;border-color:var(--green)}
+  .quiz button.wrong{background:#fbe3e6;border-color:var(--accent)}
+  .quiz .exp{font-size:14.5px;color:var(--muted);display:none;margin-top:4px}
+  .src{font-size:13px;color:var(--muted)}
+  footer{text-align:center;color:var(--muted);font-size:14px;padding:40px 20px 60px}
+</style>
+</head>
+<body>
+<div class="sitebar"><a href="../">← 回到學習筆記首頁</a><span>Git & GitHub</span></div>
+<header><div class="wrap">
+  <h1>GitHub Git Guides 複習筆記</h1>
+  <p>整理自 GitHub 官方 <a href="https://github.com/git-guides" style="color:#7ee787">Git Guides</a> 的 10 頁內容（2026 年 10 月版本），翻成繁體中文重點，並補充新手實際操作時常遇到的情況。</p>
+</div></header>
+
+<nav><div class="wrap">
+  <a href="#overview">Git 總覽</a><a href="#install">Install</a><a href="#init">Init</a><a href="#clone">Clone</a><a href="#add">Add</a>
+  <a href="#commit">Commit</a><a href="#remote">Remote</a><a href="#status">Status</a><a href="#pull">Pull</a><a href="#push">Push</a><a href="#quiz">總測驗</a>
+</div></nav>
+
+<main>
+
+<div class="card">
+  <b>怎麼用這份筆記</b>
+  <ul style="margin:6px 0 0">
+    <li>每個指令都有<b>一句話定義</b>、<b>常用選項</b>、<b>原文強調的重點</b>。</li>
+    <li>紫色框是<b>本站補充的</b>，原文沒有寫，方便你分辨哪些是官方內容。</li>
+    <li>黃色框是<b>練習時常碰到的實際情境</b>，對照著看會更有印象。</li>
+    <li>每節最後有一題<b>自問自答</b>，先在心裡回答，再按「看答案」。</li>
+    <li>覺得某節熟了，就勾右上角的「我會了」。進度會存在這個瀏覽器裡。</li>
+  </ul>
+  <div class="bar"><div id="prog"></div></div>
+  <div id="progtxt" class="src"></div>
+</div>
+
+<!-- ================= 總覽 ================= -->
+<section id="overview">
+  <h2>Git 總覽<label class="got"><input type="checkbox" data-k="overview">我會了</label></h2>
+  <div class="one">Git 是一套<b>分散式版本控制</b>軟體：能保存每次的改動，又不會蓋掉舊版本。「分散式」的意思是每個人電腦上都有一份<b>完整的</b> repo，包含所有 commit、所有分支、所有檔案。</div>
+
+  <h3>入門前要知道的三件事</h3>
+  <ul>
+    <li><b>分支很輕、很便宜</b>：開很多個也沒關係。</li>
+    <li>Git 用 SHA 雜湊來儲存改動。這種方式很適合純文字的程式碼，<b>不太適合圖片、影片這類二進位檔</b>。</li>
+    <li>repo 之間可以互相連結：你在自己電腦上工作，再跟共用的 repo 互相 push、pull。</li>
+  </ul>
+
+  <h3>為什麼用 Git（原文列出的 4 個優點）</h3>
+  <table>
+    <tr><th>優點</th><th>白話</th></tr>
+    <tr><td>Speed 速度快</td><td>SHA 壓縮讓它非常快</td></tr>
+    <tr><td>Merge conflicts 能處理衝突</td><td>多人可以同時改同一個檔案，Git 會幫忙合併</td></tr>
+    <tr><td>Cheap branches 分支便宜</td><td>在分支這個「安全沙盒」裡，還沒寫好的東西也可以先 commit、push 上去，請人給意見</td></tr>
+    <tr><td>Ease of roll back 容易退回</td><td>commit 是<b>不可變的</b>。「改歷史」其實是產生新的替代 commit，不會改動舊的。所以就算在 main 上犯錯也救得回來</td></tr>
+  </table>
+  <p>原文的態度：<b>commit 要早、要頻繁</b>（Commit often and commit early），這樣就不會有「改的東西被蓋掉了」那種心臟一沉的感覺。</p>
+
+  <h3>⭐ 官方的標準工作流程（最重要）</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 860 150" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang TC,sans-serif">
+      <defs><marker id="m" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b6470"/></marker></defs>
+      <g font-size="13.5" text-anchor="middle">
+        <rect x="4" y="25" width="128" height="74" rx="12" fill="#eaf1f9" stroke="#3a6ea5"/><text x="68" y="55" font-weight="700">① 開分支</text><text x="68" y="78" fill="#5b6470" font-size="11.5">從 main 分出去</text>
+        <rect x="148" y="25" width="128" height="74" rx="12" fill="#fdf7e8" stroke="#e9b44c"/><text x="212" y="55" font-weight="700">② 改 + commit</text><text x="212" y="78" fill="#5b6470" font-size="11.5">add → commit</text>
+        <rect x="292" y="25" width="128" height="74" rx="12" fill="#eef8f6" stroke="#2a9d8f"/><text x="356" y="55" font-weight="700">③ push</text><text x="356" y="78" fill="#5b6470" font-size="11.5">push -u origin 分支</text>
+        <rect x="436" y="25" width="128" height="74" rx="12" fill="#f4f0fa" stroke="#7b5ea7"/><text x="500" y="55" font-weight="700">④ 開 PR</text><text x="500" y="78" fill="#5b6470" font-size="11.5">比較兩條分支</text>
+        <rect x="580" y="25" width="128" height="74" rx="12" fill="#fdf0f1" stroke="#d1495b"/><text x="644" y="55" font-weight="700">⑤ 協作</text><text x="644" y="78" fill="#5b6470" font-size="11.5">review、再 commit</text>
+        <rect x="724" y="25" width="128" height="74" rx="12" fill="#e7f5e9" stroke="#2a9d8f"/><text x="788" y="55" font-weight="700">⑥ 合併進 main</text><text x="788" y="78" fill="#5b6470" font-size="11.5">然後刪掉分支</text>
+      </g>
+      <g stroke="#5b6470" stroke-width="2.2" marker-end="url(#m)">
+        <line x1="134" y1="62" x2="145" y2="62"/><line x1="278" y1="62" x2="289" y2="62"/><line x1="422" y1="62" x2="433" y2="62"/><line x1="566" y1="62" x2="577" y2="62"/><line x1="710" y1="62" x2="721" y2="62"/>
+      </g>
+      <text x="430" y="135" text-anchor="middle" font-size="13" fill="#5b6470">分支是為了「目的」而開的，不是為了「人」</text>
+    </svg>
+  </figure>
+  <ol>
+    <li><b>開分支</b>：從 main 分出去，名字照<b>功能</b>來取。HEAD 現在指在哪裡，新分支就從哪裡長出來。</li>
+    <li><b>改 + commit</b>：<code>git add [file]</code> → <code>git commit -m "說明"</code>。</li>
+    <li><b>push</b>：在本機 commit 的東西只有你自己看得到。新分支第一次推送要用 <code>git push -u origin [branch]</code>。如果被擋下來，代表遠端有新的 commit，先 <code>git pull</code>，解決衝突後再 push。</li>
+    <li><b>開 Pull Request</b>：PR 就是「比較兩條分支」。說明要寫清楚：這個改動跟什麼有關、為什麼要改、做完了哪些、還剩哪些、需要誰幫忙看。</li>
+    <li><b>協作</b>：原文特別強調，<b>PR 應該在工作開始時就開，不是做完才開</b>，這樣團隊能早點看到你在做什麼。之後在同一條分支上繼續 commit、push，PR 會自動更新。</li>
+    <li><b>合併進 main</b>：合併後 PR 會自動關閉。<b>記得刪掉分支</b>，下次要做新的東西，再從最新的 main 開一條新分支。</li>
+  </ol>
+
+  <h3>原文列的 10 個最常用指令</h3>
+  <table>
+    <tr><th>指令</th><th>作用</th></tr>
+    <tr><td><code>git clone [url]</code></td><td>下載 GitHub 上已經存在的 repo，包含全部檔案、分支和 commit</td></tr>
+    <tr><td><code>git status</code></td><td>看你在哪條分支、哪些檔案在工作區或暫存區，以及其他重要資訊</td></tr>
+    <tr><td><code>git branch</code></td><td>列出本機分支。<code>git branch [名字]</code> 建立新分支；<code>git branch --all</code> 連遠端追蹤分支一起列出</td></tr>
+    <tr><td><code>git checkout [branch]</code></td><td>切換到指定分支，並更新工作區的檔案</td></tr>
+    <tr><td><code>git add [file]</code></td><td>為檔案拍快照，放進暫存區</td></tr>
+    <tr><td><code>git commit -m "..."</code></td><td>把快照永久記錄到版本歷史裡</td></tr>
+    <tr><td><code>git pull</code></td><td>把遠端分支的新 commit 更新到你目前的本機分支。<b>等於 fetch + merge</b></td></tr>
+    <tr><td><code>git push</code></td><td>把本機分支的 commit 上傳到遠端</td></tr>
+    <tr><td><code>git log</code></td><td>瀏覽專案的演變歷史</td></tr>
+    <tr><td><code>git remote -v</code></td><td>顯示連結的遠端 repo 和它的名字（例如 origin）</td></tr>
+  </table>
+  <div class="card mine">原文用的是 <code>git checkout [branch]</code> 和 <code>git checkout -b [branch]</code>，本站的<a href="git-github-basics.html">《Git &amp; GitHub 從零開始》</a>用的是 <code>git switch [branch]</code> 和 <code>git switch -c [branch]</code>。<b>兩組效果一樣</b>，switch 是比較新、用途比較單一的寫法。看到同事或文件用 checkout，不用困惑。</div>
+  <div class="card tip">原文提醒：GitHub.com 網頁、GitHub Desktop、終端機都能操作 Git，但<b>只有終端機能用到全部功能</b>。</div>
+
+  <div class="flip"><b>Q：</b><div>Git 和 GitHub 的分工是什麼？<div class="ans">Git 負責底層的版本控制；GitHub 是建立在 Git 之上的<b>協作平台</b>，提供 PR、留言、review、自動測試、保護分支、GitHub Actions 等功能。大多數開發者在本機開發，用 GitHub 來協作。</div></div><button>看答案</button></div>
+</section>
+
+<!-- ================= Install ================= -->
+<section id="install">
+  <h2>Install Git<label class="got"><input type="checkbox" data-k="install">我會了</label></h2>
+  <div class="one">大部分的 Mac 和 Linux <b>預設就已經裝好 Git</b>。打開終端機，輸入 <code>git version</code> 確認。</div>
+  <table>
+    <tr><th>系統</th><th>安裝方式</th></tr>
+    <tr><td>Mac</td><td>① 從 git-scm 下載 macOS 安裝檔 ② 用 Homebrew：<code>brew install git</code></td></tr>
+    <tr><td>Windows</td><td>下載 Git for Windows 安裝檔，會附帶 <b>Git Bash</b>（推薦用的命令列）</td></tr>
+    <tr><td>Linux（Debian/Ubuntu）</td><td><code>sudo apt-get update</code> → <code>sudo apt-get install git-all</code></td></tr>
+    <tr><td>Linux（Fedora）</td><td><code>sudo dnf install git-all</code></td></tr>
+    <tr><td>任何系統</td><td>安裝 <b>GitHub Desktop</b> 時，也會順便裝好最新版的 Git</td></tr>
+  </table>
+  <p>裝完一律用 <code>git version</code> 驗證。</p>
+  <div class="card you">很多教學寫的是 <code>git --version</code>，跟 <code>git version</code> 效果一樣。</div>
+  <div class="card mine">Install 這頁<b>沒有提到</b>裝完要設定名字和 email（<code>git config user.name / user.email</code>）。但這一步很重要。如果同一台電腦同時用公司和個人的 GitHub 帳號，commit 的作者常常會顯示錯，原因通常就是 email 設定。可以在個別 repo 裡打 <code>git config user.email "..."</code>（不加 <code>--global</code>），只改這個 repo 的設定。</div>
+</section>
+
+<!-- ================= Init ================= -->
+<section id="init">
+  <h2><code>git init</code><label class="got"><input type="checkbox" data-k="init">我會了</label></h2>
+  <div class="one">把任何資料夾變成 Git repo。Git 會在裡面建一個隱藏的 <code>.git</code> 資料夾，所有歷史紀錄都存在裡面。<b>有沒有 <code>.git</code>，就是普通資料夾和 repo 的差別。</b></div>
+
+  <h3>常用選項</h3>
+  <table>
+    <tr><th>指令</th><th>作用</th></tr>
+    <tr><td><code>git init</code></td><td>把<b>目前</b>的資料夾變成 repo</td></tr>
+    <tr><td><code>git init &lt;directory&gt;</code></td><td>把目前路徑下的某個資料夾變成 repo</td></tr>
+    <tr><td><code>git init --bare</code></td><td>建立「bare repo」，只拿來當遠端用，不在裡面開發</td></tr>
+  </table>
+
+  <h3>⭐ init 還是 clone？（原文重點）</h3>
+  <div class="card"><b>規則：開始一個 repo，用 init 或 clone 其中一個，不要兩個都用。</b>
+    <ul style="margin-bottom:0">
+      <li><b>專案只在你電腦上、還沒用 Git</b> → 用 <code>git init</code>。整個專案只需要做一次，就算之後有其他協作者也一樣。</li>
+      <li><b>遠端已經有這個 repo</b> → 用 <code>git clone</code>，不要 init。</li>
+    </ul>
+  </div>
+  <p><b>init 之後要接上 GitHub 的完整步驟</b>（原文順序）：</p>
+<pre><code>git init                                  <span class="c"># 1. 初始化</span>
+<span class="c"># 2. 到 GitHub 建一個遠端 repo</span>
+git remote add origin &lt;URL&gt;               <span class="c"># 3. 用 origin 這個名字記住遠端網址</span>
+git add . &amp;&amp; git commit -m "..."          <span class="c"># 4. 至少要有一個 commit</span>
+git push -u origin main                   <span class="c"># 5. 推上去，並建立追蹤關係</span></code></pre>
+  <p>如果遠端 repo <b>已經有 commit 和檔案</b>，但你還是想把專案放進去：先 clone 那個 repo，把你的檔案搬進去，再 add、commit、push。</p>
+  <div class="card you">如果你跟著《從零開始》第 8 節做過 git-practice，走的就是這條路：init → 到 GitHub 建 repo → <code>remote add origin</code> → <code>push -u origin main</code>。</div>
+
+  <h3>⚠️ 在錯的地方 init 了怎麼辦</h3>
+  <p>如果在不該 init 的資料夾（例如整個家目錄）init 了，Git 會出現奇怪的錯誤訊息。處理方式：</p>
+  <ol>
+    <li>用 <code>git status</code> 看目前資料夾是否被 Git 追蹤，用 <code>ls -al</code> 找隱藏的 <code>.git</code>。</li>
+    <li>如果這一層找不到，就 <code>cd ..</code> 往上一層，重複上面的檢查，直到找到為止。</li>
+    <li>確定那個資料夾不該是 repo，就執行 <code>rm -rf .git</code>，取消 init。</li>
+    <li>再跑一次 <code>git status</code> 確認已經不再被追蹤。注意：有可能好幾層都有 <code>.git</code>。</li>
+  </ol>
+  <div class="card warn"><code>rm -rf .git</code> 會<b>永久刪除這個 repo 的所有歷史</b>，執行前一定要確認位置對不對。</div>
+
+  <div class="flip"><b>Q：</b><div>同事已經在 GitHub 上建好專案，你要加入一起做，應該打 init 還是 clone？<div class="ans"><code>git clone [url]</code>。遠端已經存在的 repo 就用 clone，不要 init。</div></div><button>看答案</button></div>
+</section>
+
+<!-- ================= Clone ================= -->
+<section id="clone">
+  <h2><code>git clone</code><label class="got"><input type="checkbox" data-k="clone">我會了</label></h2>
+  <div class="one">複製一份遠端 repo 到你的電腦。拿到的不只是檔案，而是<b>整個 repo：所有檔案、所有分支、所有 commit</b>。</div>
+  <ul>
+    <li>clone 通常<b>只在一開始做一次</b>。之後的日常開發用 pull、push 就好，不用再 clone。</li>
+    <li>有了完整的 repo，你可以在 feature 分支上安心地改，之後 push → 開 PR → 測試 → 合併進 main。</li>
+  </ul>
+  <h3>常用選項</h3>
+  <table>
+    <tr><th>指令</th><th>作用 / 什麼時候用</th></tr>
+    <tr><td><code>git clone [url]</code></td><td><b>最常用</b>，下載整個 repo</td></tr>
+    <tr><td><code>git clone [url] --branch [b] --single-branch</code></td><td>只 clone 某一條分支。原文說<b>除非 repo 非常大、塞了很多二進位檔，否則沒什麼好處</b></td></tr>
+    <tr><td><code>git clone --sparse</code></td><td>只放根目錄的檔案，適合超大型 repo</td></tr>
+    <tr><td><code>git clone --mirror</code></td><td>做一份鏡像備份（不能編輯），用於搬遷 Git 主機或自動化測試</td></tr>
+    <tr><td><code>git clone --recurse-submodules</code></td><td>連同子模組一起 clone</td></tr>
+  </table>
+  <p>預設情況下，clone 會為遠端的<b>每一條</b>分支建立「遠端追蹤分支」，但<b>只會建立一條本機分支</b>，也就是預設分支（通常是 main）。</p>
+  <h3>HTTPS 還是 SSH？</h3>
+  <p>看你用哪種方式驗證身份。通常整台電腦統一用一種，不會兩種混著用。</p>
+  <div class="card you">如果你用 <code>gh auth login</code> 時選的是 <b>HTTPS</b>，clone 時就用 <code>https://github.com/...</code> 開頭的網址；選 SSH 的話，就用 <code>git@github.com:...</code> 開頭的網址。</div>
+  <div class="flip"><b>Q：</b><div>clone 完之後，打 <code>git branch</code> 只看到 main，其他分支是不是沒下載？<div class="ans">有下載。其他分支是以「遠端追蹤分支」的形式存在，用 <code>git branch --all</code> 就看得到（通常顯示成紅色的 <code>remotes/origin/...</code>）。clone 只會幫你建立預設分支這一條本機分支。</div></div><button>看答案</button></div>
+</section>
+
+<!-- ================= Add ================= -->
+<section id="add">
+  <h2><code>git add</code><label class="got"><input type="checkbox" data-k="add">我會了</label></h2>
+  <div class="one">把工作區裡新增或修改的檔案放進<b>暫存區（staging area）</b>，標記成「下一個 commit 要包含的內容」。<b>沒有 add，commit 就沒有東西可以存。</b></div>
+  <ul>
+    <li>add 讓你<b>不用改變工作習慣，也能整理出乾淨的歷史</b>。就算你一口氣改了很多不相關的東西，也可以分批 add、分批 commit。</li>
+    <li>可以 add 全部檔案、一個資料夾、特定檔案，甚至<b>檔案裡的某一段</b>。</li>
+    <li><b>刪除檔案也要 add</b>：add 一個已刪除的檔案，就是把「刪除」這個動作放進暫存區。原文建議把 add 想成 <code>git stage</code>，比較不會混淆。</li>
+  </ul>
+
+  <h3>常用選項</h3>
+  <table>
+    <tr><th>指令</th><th>作用</th></tr>
+    <tr><td><code>git add &lt;path&gt;</code></td><td>暫存特定檔案或資料夾（<b>原文認為最安全、最清楚</b>）</td></tr>
+    <tr><td><code>git add -A</code></td><td>暫存整個 repo 的所有改動（.gitignore 裡的除外）</td></tr>
+    <tr><td><code>git add .</code></td><td>暫存<b>目前資料夾</b>以下的所有改動</td></tr>
+    <tr><td><code>git add -u</code></td><td>只暫存修改和刪除，<b>不包含新檔案</b></td></tr>
+    <tr><td><code>git add -p</code></td><td>互動式地一段一段挑要暫存哪些改動</td></tr>
+  </table>
+
+  <h3>三種「全部 add」的差別（原文表格）</h3>
+  <table>
+    <tr><th>指令</th><th>新檔案</th><th>修改</th><th>刪除</th><th>點開頭的檔案</th><th>目前資料夾</th><th>上層資料夾</th></tr>
+    <tr><td><code>git add -A</code></td><td class="y">✔</td><td class="y">✔</td><td class="y">✔</td><td class="y">✔</td><td class="y">✔</td><td class="y">✔</td></tr>
+    <tr><td><code>git add .</code></td><td class="y">✔</td><td class="y">✔</td><td class="y">✔</td><td class="y">✔</td><td class="y">✔</td><td class="n">✘</td></tr>
+    <tr><td><code>git add -u</code></td><td class="n">✘</td><td class="y">✔</td><td class="y">✔</td><td class="y">✔</td><td class="y">✔</td><td class="y">✔</td></tr>
+  </table>
+  <p>簡單記：<code>.</code> 只管你「站的這層以下」；<code>-A</code> 管整個 repo；<code>-u</code> 不管新檔案。</p>
+
+  <h3>⚠️ 一次 add 全部的兩個風險</h3>
+  <ol>
+    <li><b>歷史變得亂</b>：commit 太大、混了不相關的改動，就失去回頭看歷史的價值。</li>
+    <li><b>不小心把不該提交的檔案 commit 進去</b>：沒寫進 .gitignore 的檔案都會被加進來，包括大型二進位檔，以及<b>含有密碼或 token 的檔案</b>。</li>
+  </ol>
+
+  <h3>add 錯了怎麼退回</h3>
+  <p>原文的方法：<code>git reset HEAD</code>（等於 <code>git reset --mixed HEAD</code>），把暫存區的東西退回工作區，不影響已經 commit 的歷史。</p>
+  <div class="card warn">原文提醒：如果一個檔案 add 之後<b>你又繼續改它</b>，這時工作區和暫存區的版本已經不一樣了。在這種情況下退回暫存，有可能蓋掉工作區裡還沒暫存的改動。比較安全的做法是先全部 add，再一起退回。</div>
+  <div class="card mine"><code>git restore --staged 檔名</code> 是比較新的寫法，效果跟 <code>git reset HEAD 檔名</code> 一樣，都是「從紙箱拿出來」。</div>
+
+  <div class="flip"><b>Q：</b><div>你改了 SQL 查詢，也順手修了 README 的錯字。依照原文的精神，應該怎麼 commit？<div class="ans">分成兩個 commit：先 <code>git add query.sql</code> → commit，再 <code>git add README.md</code> → commit。commit 應該是「邏輯上獨立的一個改動單位」（logical, atomic units of change）。</div></div><button>看答案</button></div>
+</section>
+
+<!-- ================= Commit ================= -->
+<section id="commit">
+  <h2><code>git commit</code><label class="got"><input type="checkbox" data-k="commit">我會了</label></h2>
+  <div class="one">建立一個 commit，也就是<b>整個 repo 在某個時間點的快照</b>。除了內容和說明之外，還會記下作者、時間等資訊。長期累積下來，commit 應該能講出這個 repo 是怎麼變成現在這樣的「故事」。</div>
+  <ul>
+    <li>commit 會建在<b>你目前所在的分支</b>（HEAD 指的地方）。所以<b>commit 前先打 <code>git status</code></b>，確認你在對的分支上。</li>
+    <li>commit 分<b>兩個階段</b>：先 add 選內容，再 commit。Git 只看暫存區裡有什麼。</li>
+    <li>只要是純文字檔，不用擔心檔案太多、太大或 commit 太頻繁，Git 都處理得了。</li>
+  </ul>
+
+  <h3>常用選項</h3>
+  <table>
+    <tr><th>指令</th><th>作用</th></tr>
+    <tr><td><code>git commit</code></td><td>沒加 <code>-m</code>，會打開預設編輯器（通常是 Vim）讓你寫說明</td></tr>
+    <tr><td><code>git commit -m "..."</code></td><td>直接把說明寫在同一行</td></tr>
+    <tr><td><code>git commit -am "..."</code></td><td>自動 add <b>已經被追蹤</b>的檔案再 commit。<b>新檔案不會被加進去</b></td></tr>
+    <tr><td><code>git commit --amend</code></td><td>用一個新的 commit 取代<b>最近一次</b>的 commit</td></tr>
+  </table>
+  <div class="card mine">原文說離開 Vim 用 <code>Esc</code> → <code>:wq</code> → Enter，這是<b>存檔並完成 commit</b>。另一個常見的 <code>:q!</code> 則是<b>不存檔、直接放棄</b>這次 commit。想送出就用 <code>:wq</code>，想取消就用 <code>:q!</code>。</div>
+
+  <h3>✍️ commit 說明的寫法（原文規範）</h3>
+  <p>簡短、描述這次的改動，用<b>現在式、祈使句</b>（像下指令一樣）：</p>
+<pre><code>git commit -m "create file structure for Git guides"
+git commit -m "translate Git cheat sheet into German"
+git commit -m "update broken URL to Git resources"</code></pre>
+  <p>寫中文時也可以照同樣的精神，例如「新增留存率查詢」「修正金額重複計算」，用動詞開頭。</p>
+
+  <h3>⭐ 撤銷 commit：三個工具</h3>
+  <div class="card warn"><b>最重要的原則：</b>撤銷<b>已經推到遠端</b>的 commit，可能會給協作者造成大麻煩；撤銷<b>只在本機</b>的 commit 安全得多。</div>
+  <table>
+    <tr><th>工具</th><th>做什麼</th><th>安全程度</th></tr>
+    <tr><td><code>git revert</code></td><td>不刪除舊 commit，而是新增一個「反向」的 commit 來抵銷它。<b>原文說只要可以，一律推薦用這個</b></td><td>🟢 最安全</td></tr>
+    <tr><td><code>git reset</code></td><td>把 HEAD 和分支指標移到另一個時間點，看起來就像中間的 commit 從來沒發生過。分 <code>--soft</code>、<code>--mixed</code>、<code>--hard</code> 三種</td><td>🔴 可能弄丟東西</td></tr>
+    <tr><td><code>git reflog</code></td><td>記錄 HEAD 去過的每一個地方。reset 不小心弄丟 commit 時，從這裡可以找回來</td><td>🛟 救命用</td></tr>
+  </table>
+  <p>用 <code>git reset</code> 之前：① 如果動到共用的 commit，先跟團隊講 ② 搞清楚三種模式的差別 ③ <b>不想丟的東西先 commit</b>。commit 過的東西救得回來，沒 commit 的就救不回來了。</p>
+
+  <h3>為什麼改共用的歷史很危險？（原文的例子）</h3>
+  <p>同事刪掉了最新的一個 commit，然後 force push。但你手上的版本還有那個 commit，等你下次 pull 再 push，<b>那個被刪的 commit 就又回到共用歷史裡了</b>。如果它裡面是密碼、token 或大檔案，就會在<b>沒有任何警告</b>的情況下又跑回來。</p>
+
+  <h3><code>--amend</code> 適合的情況</h3>
+  <p>只會改<b>最近一次</b> commit。適合用在：<b>還沒 push</b>、說明打錯字、或漏了想放進去的改動。</p>
+
+  <div class="card you">常見情境：發現過去的 commit 作者 email 設錯了，用 rebase 配合 <code>--amend --reset-author</code> 改寫作者，再 force push。如果 repo <b>只有你一個人在用</b>，這樣做沒問題；但只要有其他人 pull 過，就會碰到上面說的「改共用歷史」風險。</div>
+
+  <div class="flip"><b>Q：</b><div>main 上有一個已經 push 的 commit 把報表算錯了，團隊其他人也已經 pull 了。要用 revert 還是 reset？<div class="ans"><code>git revert</code>。它會新增一個反向 commit，不改寫別人已經拿到的歷史。reset 加上 force push 會讓大家的歷史對不上。</div></div><button>看答案</button></div>
+</section>
+
+<!-- ================= Remote ================= -->
+<section id="remote">
+  <h2><code>git remote</code><label class="got"><input type="checkbox" data-k="remote">我會了</label></h2>
+  <div class="one">管理你的本機 repo 連到了哪些遠端 repo。這個指令本身不常打，但「遠端」這個概念支撐了很多其他操作。</div>
+  <table>
+    <tr><th>指令</th><th>作用</th></tr>
+    <tr><td><code>git remote -v</code></td><td>列出目前連結的遠端</td></tr>
+    <tr><td><code>git remote add [name] [URL]</code></td><td>新增一個遠端</td></tr>
+    <tr><td><code>git remote remove [name]</code></td><td>移除一個遠端</td></tr>
+  </table>
+
+  <h3>origin 和 upstream</h3>
+  <ul>
+    <li><b>origin</b>：遠端網址的「好記名字」，像 key-value 一樣，origin 是預設的名字。</li>
+    <li><b>upstream</b>：fork 別人的專案時，origin 指向<b>你的 fork</b>，原本的專案通常再加一個遠端叫 upstream，方便把原專案的更新拉下來。</li>
+  </ul>
+
+  <h3>⭐ 只有 4 個指令會跟遠端溝通</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 820 190" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang TC,sans-serif">
+      <defs><marker id="u" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2a9d8f"/></marker><marker id="d" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3a6ea5"/></marker></defs>
+      <rect x="40" y="65" width="200" height="70" rx="14" fill="#fff" stroke="#1f2328" stroke-width="2"/><text x="140" y="97" text-anchor="middle" font-size="16" font-weight="700">💻 本機 repo</text><text x="140" y="118" text-anchor="middle" font-size="12" fill="#5b6470">其他所有指令都只在這裡</text>
+      <rect x="580" y="65" width="200" height="70" rx="14" fill="#eaf1f9" stroke="#3a6ea5" stroke-width="2"/><text x="680" y="97" text-anchor="middle" font-size="16" font-weight="700">☁️ 遠端 origin</text><text x="680" y="118" text-anchor="middle" font-size="12" fill="#5b6470">GitHub</text>
+      <line x1="245" y1="45" x2="572" y2="45" stroke="#2a9d8f" stroke-width="3" marker-end="url(#u)"/><text x="410" y="36" text-anchor="middle" font-size="15" font-weight="700" fill="#2a9d8f">git push ⬆</text>
+      <line x1="572" y1="160" x2="245" y2="160" stroke="#3a6ea5" stroke-width="3" marker-end="url(#d)"/><text x="410" y="185" text-anchor="middle" font-size="15" font-weight="700" fill="#3a6ea5">git clone / git pull / git fetch ⬇</text>
+    </svg>
+    <figcaption>除了這 4 個指令，其他操作（add、commit、branch、merge、log…）全部只在本機進行</figcaption>
+  </figure>
+
+  <h3>遠端追蹤分支 vs 本機工作分支</h3>
+  <ul>
+    <li><b>遠端追蹤分支</b>（<code>git branch --all</code> 裡通常是紅色的）：遠端分支的<b>唯讀副本</b>，每次 fetch 或 pull 時更新。它們<b>不會自動刪除</b>，會越積越多。用 <code>git fetch --prune</code> 可以清掉遠端已經刪除的分支。</li>
+    <li><b>本機工作分支</b>：你實際在上面工作的分支，可以連到某條遠端分支，也可以沒有對應的遠端分支。</li>
+  </ul>
+  <div class="card you">例如打過 <code>git remote add origin https://github.com/your-name/git-practice.git</code> 之後，再打 <code>git remote -v</code>，會看到 fetch 和 push 兩行都指向這個網址。</div>
+  <div class="flip"><b>Q：</b><div>你一整天都在本機 add、commit、merge，沒有網路也能做嗎？<div class="ans">可以。只有 push、clone、pull、fetch 這 4 個指令需要連到遠端，其他操作都只在本機進行。</div></div><button>看答案</button></div>
+</section>
+
+<!-- ================= Status ================= -->
+<section id="status">
+  <h2><code>git status</code><label class="got"><input type="checkbox" data-k="status">我會了</label></h2>
+  <div class="one">顯示工作區和暫存區目前的狀態。<b>不確定的時候就打 <code>git status</code></b>，它只會顯示資訊，<b>不會改動任何東西</b>。</div>
+  <h3>它會告訴你</h3>
+  <ul>
+    <li><b>HEAD 指向哪裡</b>：是某條分支，還是某個 commit（也就是你「站在」哪裡）。</li>
+    <li>有哪些改過、但還沒 commit 的檔案。</li>
+    <li>這些改動有沒有被暫存（add 過了沒）。</li>
+    <li>如果本機分支有連到遠端分支，會顯示你<b>領先（ahead）或落後（behind）幾個 commit</b>。</li>
+    <li>發生衝突時，會列出<b>到底是哪些檔案衝突</b>。</li>
+  </ul>
+  <table>
+    <tr><th>指令</th><th>作用</th></tr>
+    <tr><td><code>git status</code></td><td>預設格式，最常用</td></tr>
+    <tr><td><code>git status -s</code></td><td>精簡格式</td></tr>
+    <tr><td><code>git status -v</code></td><td>詳細格式，連還沒 commit 的文字改動都列出來</td></tr>
+  </table>
+  <div class="card you">例如 rebase 做到一半卡住時，<code>git status</code> 會顯示 <code>interactive rebase in progress</code> 和 <code>No commands remaining</code>，從這些訊息就知道還差一步 <code>git rebase --continue</code>。這正是原文說的「它會依照你目前的情況給出有用的資訊」。</div>
+  <div class="flip"><b>Q：</b><div>原文在 commit、pull、push 三頁都提醒要先做同一件事，是什麼？<div class="ans">先打 <code>git status</code>。commit 前確認在對的分支上；pull 前確認沒有會被蓋掉的未 commit 改動；push 前確認自己在哪條分支（push 只會推目前這條）。</div></div><button>看答案</button></div>
+</section>
+
+<!-- ================= Pull ================= -->
+<section id="pull">
+  <h2><code>git pull</code><label class="got"><input type="checkbox" data-k="pull">我會了</label></h2>
+  <div class="one">更新你目前的本機分支，以及所有遠端追蹤分支。<b>git pull = git fetch + git merge</b>。只要有在用遠端的 repo，<b>至少每天 pull 一次</b>。</div>
+
+  <figure class="fig">
+    <svg viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang TC,sans-serif">
+      <defs><marker id="p" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1f2328"/></marker></defs>
+      <rect x="10" y="50" width="200" height="70" rx="12" fill="#eaf1f9" stroke="#3a6ea5" stroke-width="2"/><text x="110" y="82" text-anchor="middle" font-size="15" font-weight="700">☁️ 遠端 main</text><text x="110" y="104" text-anchor="middle" font-size="12" fill="#5b6470">GitHub 上的版本</text>
+      <rect x="310" y="50" width="200" height="70" rx="12" fill="#f3ede3" stroke="#c9bfae" stroke-width="2"/><text x="410" y="82" text-anchor="middle" font-size="15" font-weight="700">origin/main</text><text x="410" y="104" text-anchor="middle" font-size="12" fill="#5b6470">遠端追蹤分支（唯讀副本）</text>
+      <rect x="610" y="50" width="200" height="70" rx="12" fill="#fff" stroke="#1f2328" stroke-width="2"/><text x="710" y="82" text-anchor="middle" font-size="15" font-weight="700">💻 你的 main</text><text x="710" y="104" text-anchor="middle" font-size="12" fill="#5b6470">本機工作分支</text>
+      <line x1="214" y1="85" x2="304" y2="85" stroke="#1f2328" stroke-width="2.5" marker-end="url(#p)"/><text x="259" y="70" text-anchor="middle" font-size="14" font-weight="700" fill="#3a6ea5">fetch</text>
+      <line x1="514" y1="85" x2="604" y2="85" stroke="#1f2328" stroke-width="2.5" marker-end="url(#p)"/><text x="559" y="70" text-anchor="middle" font-size="14" font-weight="700" fill="#7b5ea7">merge</text>
+      <path d="M110 125 Q 410 175 710 125" fill="none" stroke="#2a9d8f" stroke-width="2.5" stroke-dasharray="6 5"/><text x="410" y="163" text-anchor="middle" font-size="14" font-weight="700" fill="#2a9d8f">git pull 一次做完兩步</text>
+    </svg>
+  </figure>
+
+  <h3>什麼時候改用 fetch？</h3>
+  <ul>
+    <li><b>預期會有衝突</b>：先 fetch，Git 不會馬上合併，你可以晚點再處理衝突，而且到時候不需要網路。</li>
+    <li><b>快要斷網了</b>（例如要上飛機）：先 fetch，把所有遠端分支的最新狀態抓下來。</li>
+    <li>用了 fetch 之後，<b>記得自己再 merge</b>，否則你還是在舊的版本上工作。</li>
+  </ul>
+
+  <h3>常用選項</h3>
+  <table>
+    <tr><th>指令</th><th>作用</th></tr>
+    <tr><td><code>git pull</code></td><td>更新目前的分支和所有遠端追蹤分支</td></tr>
+    <tr><td><code>git pull --rebase</code></td><td>把你本機的 commit 移到遠端新 commit 的後面，<b>不產生 merge commit</b>，歷史保持一直線</td></tr>
+    <tr><td><code>git pull --all</code></td><td>抓所有遠端，fork 或有多個遠端時好用</td></tr>
+    <tr><td><code>git pull --force</code></td><td>強制 fetch 某條遠端追蹤分支（搭配 refspec 用，很少用到）</td></tr>
+  </table>
+
+  <h3>⭐ 原文的三個好習慣</h3>
+  <ol>
+    <li><b>開工前先 pull</b>：就算只是休息一下，協作者也可能在這段時間改了你的分支。</li>
+    <li><b>pull 前先 <code>git status</code></b>：還沒 commit 的改動，有可能被 pull 蓋掉，或讓 merge 卡住做不完。遇到這種情況，先把那些改動 commit 或刪掉，再 pull 一次。</li>
+    <li><b>開新分支前，先把 main pull 到最新</b>：不然新分支一開始就少了別人剛合併的東西，之後容易衝突或做重複的事。</li>
+  </ol>
+
+  <h3>救援：撤銷一次 pull</h3>
+<pre><code>git reflog                 <span class="c"># 找到 pull 之前所在的那個 commit</span>
+git reset --hard &lt;SHA&gt;     <span class="c"># 回到那裡</span></code></pre>
+  <p>fetch 沒辦法撤銷，但 merge 可以。reflog 只存在本機，保留 30 到 90 天。<b>這也是原文說「以為自己搞砸了，先別急著刪 repo」的原因</b>，reflog 還在裡面。</p>
+
+  <h3>救援：讓本機完全變成跟遠端一樣（放棄本機的 commit）</h3>
+<pre><code>git fetch origin main
+git reset --hard origin/main</code></pre>
+  <div class="card warn"><code>reset --hard</code> 會丟掉本機還沒推上去的 commit 和改動，確定真的不要了再用。</div>
+
+  <div class="flip"><b>Q：</b><div>今天早上你要從 main 開一條新分支來做分析。第一步要做什麼？<div class="ans">先 <code>git switch main</code>，再 <code>git pull</code> 把 main 更新到最新，最後才 <code>git switch -c 新分支</code>。</div></div><button>看答案</button></div>
+</section>
+
+<!-- ================= Push ================= -->
+<section id="push">
+  <h2><code>git push</code><label class="got"><input type="checkbox" data-k="push">我會了</label></h2>
+  <div class="one">把本機分支的 commit 上傳到對應的遠端分支。可以把它想成「更新」或「發布」。</div>
+  <ul>
+    <li><b>預設只推你目前所在的那條分支</b>。在 main 上 push，就只會更新遠端的 main。所以 push 前先 <code>git status</code>。</li>
+    <li>push 也會順便更新這條分支上還開著的 PR。</li>
+    <li><b>最佳做法：push 之前先 pull</b>，把衝突留在本機解決，不要在 GitHub 上解。</li>
+  </ul>
+  <h3>常用選項</h3>
+  <table>
+    <tr><th>指令</th><th>作用</th></tr>
+    <tr><td><code>git push</code></td><td>推目前所在的分支</td></tr>
+    <tr><td><code>git push -u origin [branch]</code></td><td>推送<b>新分支</b>時用，建立長期的追蹤關係，之後打 <code>git push</code> 就夠了</td></tr>
+    <tr><td><code>git push -f</code></td><td>強制推送，會刪除或覆蓋遠端的 commit。<b>小心使用！</b></td></tr>
+    <tr><td><code>git push --all</code></td><td>推送所有分支</td></tr>
+    <tr><td><code>git push --tags</code></td><td>推送遠端還沒有的 tag</td></tr>
+  </table>
+
+  <h3>⭐ 為什麼推不上去？</h3>
+  <p>先用 <code>git status</code> 看你在哪條分支。如果你在<b>受保護的分支</b>（例如公司 repo 的 main）上，可能不允許直接 push，這很正常。</p>
+  <div class="card"><b>情況 1：改了東西，但還沒開分支</b>
+<pre><code>git checkout -b [branchname]          <span class="c"># 從目前的 commit 開一條新分支（= git switch -c）</span>
+git push -u origin [branchname]</code></pre>
+  </div>
+  <div class="card"><b>情況 2：commit 到錯的分支上</b>
+  <ol style="margin-bottom:0">
+    <li>切到你原本要 commit 的那條分支：<code>git checkout [branchname]</code></li>
+    <li>把錯誤那條分支上的 commit 合併過來：<code>git merge [錯的分支]</code></li>
+    <li><code>git push</code></li>
+    <li>回到錯的那條分支，找到它原本應該停在的 commit，用 <code>git reset --hard</code> 把指標移回去。</li>
+  </ol></div>
+  <div class="card mine">另一個常見原因原文放在總覽頁：遠端有你本機沒有的新 commit（錯誤訊息裡會有 <code>rejected</code>、<code>fetch first</code>）。解法是先 <code>git pull</code>，再 push。</div>
+  <div class="card you">如果在 rebase 做到一半時打 <code>git push</code>，Git 會回 <code>You are not currently on a branch</code>，因為這時 HEAD 不在任何分支上。這也印證了「push 只推目前所在的分支」。</div>
+
+  <div class="flip"><b>Q：</b><div>你在新開的 <code>fix-sql</code> 分支 commit 完，第一次打 <code>git push</code> 失敗，該怎麼打？<div class="ans"><code>git push -u origin fix-sql</code>。新分支第一次推送要告訴 Git 推到哪裡，並建立追蹤關係，之後打 <code>git push</code> 就夠了。</div></div><button>看答案</button></div>
+</section>
+
+<!-- ================= 總測驗 ================= -->
+<section id="quiz" class="quiz">
+  <h2>🎯 總測驗</h2>
+  <p class="src">10 題，都根據 Git Guides 原文出題。</p>
+  <div id="quizbox"></div>
+  <p id="score" style="font-weight:700;font-size:18px"></p>
+</section>
+
+<p class="src">資料來源：GitHub, <a href="https://github.com/git-guides">Git Guides</a>：Git、Install Git、git init、git clone、git add、git commit、git remote、git status、git pull、git push，共 10 頁（2026 年 10 月版本）。本頁為中文重點整理，詳細內容請以原文為準。紫色框和黃色框是本站補充，不是原文內容。</p>
+</main>
+<footer>熟練的關鍵就是反覆練習，每個指令都在 git-practice 裡再打一次 🌱</footer>
+
+<script>
+const KEY='git-guides-review-zhTW-v1';
+let S={};try{S=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
+S.got=S.got||{};S.quiz=S.quiz||{};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+
+// 我會了
+const boxes=[...document.querySelectorAll('.got input')];
+function upd(){const n=boxes.filter(b=>b.checked).length;document.getElementById('prog').style.width=(n/boxes.length*100)+'%';document.getElementById('progtxt').textContent=`已掌握 ${n} / ${boxes.length} 節`}
+boxes.forEach(b=>{b.checked=!!S.got[b.dataset.k];b.onchange=()=>{S.got[b.dataset.k]=b.checked;save();upd()}});
+upd();
+
+// 翻卡
+document.querySelectorAll('.flip').forEach(f=>{const b=f.querySelector('button');b.onclick=()=>{f.classList.toggle('open');b.textContent=f.classList.contains('open')?'收起':'看答案'}});
+
+// 測驗
+const Q=[
+ {q:'遠端已經有 repo 了，你要開始參與。應該？',o:['git init 然後 git clone','只用 git clone','只用 git init'],a:1,e:'原文：init 和 clone 擇一，不要兩個都用。遠端已經存在就用 clone。'},
+ {q:'git pull 等於哪兩個指令的組合？',o:['git fetch + git merge','git push + git merge','git clone + git fetch'],a:0,e:'fetch 更新遠端追蹤分支，merge 把它合併進你目前的分支。'},
+ {q:'以下哪一個「不會」跟遠端溝通？',o:['git fetch','git commit','git clone'],a:1,e:'只有 push、clone、pull、fetch 這 4 個會連到遠端，commit 只在本機進行。'},
+ {q:'git add . 和 git add -A 的差別是？',o:['完全一樣','add . 不包含上層資料夾的改動，-A 包含整個 repo','add . 不包含新檔案'],a:1,e:'看原文那張表：. 只管目前資料夾以下；-A 管整個 repo。'},
+ {q:'git commit -am "..." 會把哪些檔案放進 commit？',o:['所有檔案，包含新檔案','只有已經被 Git 追蹤的檔案的改動','只有新檔案'],a:1,e:'-a 只會自動暫存已經被追蹤的檔案，新檔案還是要先 git add。'},
+ {q:'已經 push、別人也 pull 了的錯誤 commit，原文最推薦用什麼撤銷？',o:['git reset --hard','git revert','git commit --amend'],a:1,e:'revert 新增一個反向 commit，不改寫共用歷史，是最安全的方式。'},
+ {q:'reset 之後發現弄丟了 commit，該用哪個指令找回來？',o:['git reflog','git status','git remote -v'],a:0,e:'reflog 記錄了 HEAD 去過的每個地方（只存在本機，保留 30 到 90 天）。'},
+ {q:'原文對開 Pull Request 時機的建議是？',o:['全部做完、測完才開','工作一開始就開，讓團隊早點看到','只有主管才能開'],a:1,e:'PR should be open when work is beginning：越早開，團隊越早看到你在做什麼。'},
+ {q:'git push 預設會推送哪些分支？',o:['所有分支','只推目前所在的那條分支','只推 main'],a:1,e:'所以 push 前要先用 git status 確認自己在哪條分支。'},
+ {q:'原文建議 commit 說明怎麼寫？',o:['越長越好','簡短、用現在式祈使句，例如 "update broken URL"','寫日期就好'],a:1,e:'例如 create…、translate…、update…，用動詞開頭，描述這次的改動。'},
+];
+const qb=document.getElementById('quizbox');let score=0,answered=0;
+Q.forEach((x,i)=>{
+  const d=document.createElement('div');d.className='card';
+  d.innerHTML=`<b>Q${i+1}. ${x.q}</b>`+x.o.map((o,j)=>`<button class="opt" data-j="${j}">${String.fromCharCode(65+j)}. ${o}</button>`).join('')+`<div class="exp">💡 ${x.e}</div>`;
+  let done=false;
+  const pick=(j,p)=>{if(done)return;done=true;answered++;const os=d.querySelectorAll('.opt');
+    if(j===x.a){os[j].classList.add('right');score++}else{os[j].classList.add('wrong');os[x.a].classList.add('right')}
+    d.querySelector('.exp').style.display='block';if(p){S.quiz[i]=j;save()}
+    if(answered===Q.length)document.getElementById('score').textContent=`分數：${score} / ${Q.length} ${score===Q.length?'🎉 全對！':'👍 回去看錯的那幾節'}`};
+  d.querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(+b.dataset.j,true));
+  qb.appendChild(d);
+  if(S.quiz[i]!==undefined)pick(S.quiz[i],false);
+});
+const r=document.createElement('button');r.textContent='重新作答';r.style.cssText='border:1px solid #e4ddd2;background:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font-family:inherit;font-size:15px';
+r.onclick=()=>{S.quiz={};save();location.hash='quiz';location.reload()};
+document.getElementById('score').after(r);
+</script>
+</body>
+</html>

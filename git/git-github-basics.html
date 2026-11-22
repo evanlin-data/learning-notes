@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git & GitHub 從零開始</title>
+<meta name="description" content="給完全新手的 Git 與 GitHub 圖解教學：存檔點、分支、push/pull、Pull Request、救命指南。">
+<link rel="icon" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  :root{
+    --bg:#faf7f2; --ink:#1f2328; --muted:#5b6470; --line:#e4ddd2;
+    --card:#ffffff; --accent:#d1495b; --green:#2a9d8f; --blue:#3a6ea5; --yellow:#e9b44c; --purple:#7b5ea7;
+    --code:#1e2430;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.75;font-size:16px}
+  header{background:var(--code);color:#fff;padding:56px 24px 40px}
+  header .wrap{max-width:900px;margin:auto}
+  header h1{font-size:38px;margin:0 0 8px;letter-spacing:1px}
+  header p{color:#c9d1d9;margin:0;font-size:17px}
+  nav{position:sticky;top:0;background:#fffdf9ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);z-index:10}
+  nav .wrap{max-width:900px;margin:auto;display:flex;gap:6px;overflow-x:auto;padding:10px 24px}
+  nav a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:14px;padding:4px 10px;border-radius:20px}
+  nav a:hover{background:#efe8dc;color:var(--ink)}
+  main{max-width:900px;margin:auto;padding:24px}
+  section{margin:48px 0}
+  h2{font-size:28px;margin:0 0 6px;display:flex;align-items:center;gap:12px}
+  h2 .num{background:var(--accent);color:#fff;font-size:15px;border-radius:50%;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  h3{font-size:20px;margin:28px 0 8px}
+  .sub{color:var(--muted);margin:0 0 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0}
+  .tip{border-left:5px solid var(--green);background:#eef8f6}
+  .warn{border-left:5px solid var(--accent);background:#fdf0f1}
+  .idea{border-left:5px solid var(--yellow);background:#fdf7e8}
+  .tip b:first-child,.warn b:first-child,.idea b:first-child{display:block;margin-bottom:4px}
+  pre{background:var(--code);color:#e6edf3;padding:16px 18px;border-radius:10px;overflow-x:auto;font-size:14.5px;line-height:1.6;margin:12px 0;position:relative}
+  pre .c{color:#8b949e}
+  pre .o{color:#7ee787}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace}
+  p code,li code,td code{background:#efe8dc;padding:1px 6px;border-radius:5px;font-size:14px}
+  .copy{position:absolute;top:8px;right:8px;background:#30363d;color:#c9d1d9;border:0;border-radius:6px;font-size:12px;padding:3px 9px;cursor:pointer}
+  .copy:hover{background:#484f58}
+  svg{width:100%;height:auto;display:block}
+  .fig{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:16px 0}
+  .fig figcaption{text-align:center;color:var(--muted);font-size:14px;margin-top:6px}
+  table{width:100%;border-collapse:collapse;font-size:15px;background:#fff;border-radius:10px;overflow:hidden}
+  th,td{border-bottom:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+  th{background:#f3ede3}
+  .path{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .stage{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;position:relative}
+  .stage .day{font-size:13px;font-weight:700;color:#fff;background:var(--blue);display:inline-block;padding:2px 10px;border-radius:12px;margin-bottom:6px}
+  .stage h4{margin:4px 0 6px;font-size:17px}
+  .stage ul{margin:0;padding-left:18px;font-size:14.5px;color:var(--muted)}
+  .check{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+  .check input{margin-top:6px;transform:scale(1.25);accent-color:var(--green)}
+  .check.done span{text-decoration:line-through;color:var(--muted)}
+  .bar{height:10px;background:#eee4d6;border-radius:10px;overflow:hidden;margin:10px 0}
+  .bar div{height:100%;background:var(--green);width:0;transition:width .3s}
+  .quiz .q{margin:18px 0}
+  .quiz button.opt{display:block;width:100%;text-align:left;margin:6px 0;padding:10px 14px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;font-size:15px;font-family:inherit}
+  .quiz button.opt:hover{background:#f6f1e8}
+  .quiz button.right{background:#dff3ef;border-color:var(--green)}
+  .quiz button.wrong{background:#fbe3e6;border-color:var(--accent)}
+  .quiz .exp{font-size:14.5px;color:var(--muted);display:none;margin-top:4px}
+  details{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600}
+  .analogy{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){.analogy{grid-template-columns:1fr} header h1{font-size:30px}}
+  footer{text-align:center;color:var(--muted);font-size:14px;padding:40px 20px 60px}
+</style>
+</head>
+<body>
+<div class="sitebar"><a href="../">← 回到學習筆記首頁</a><span>Git & GitHub</span></div>
+
+<header><div class="wrap">
+  <h1>Git & GitHub 從零開始</h1>
+  <p>給完全新手的圖解教學。每一節都有圖、有能直接複製的指令，也有可以動手做的練習。</p>
+</div></header>
+
+<nav><div class="wrap">
+  <a href="#plan">學習路線</a><a href="#what">Git 是什麼</a><a href="#install">安裝</a><a href="#three">三個區域</a>
+  <a href="#first">第一個 commit</a><a href="#history">看歷史</a><a href="#branch">分支</a><a href="#github">GitHub</a>
+  <a href="#push">push / pull</a><a href="#pr">Pull Request</a><a href="#oops">救命指南</a><a href="#portfolio">作品集</a>
+  <a href="#cheat">速查表</a><a href="#quiz">小測驗</a>
+</div></nav>
+
+<main>
+
+<!-- ============ 0. 學習路線 ============ -->
+<section id="plan">
+  <h2><span class="num">0</span>怎麼學最有效？</h2>
+  <p class="sub">建議用 7 天，每天 30–60 分鐘就好。</p>
+
+  <div class="card idea">
+    <b>💡 最重要的一個建議</b>
+    Git 光看是學不會的，要<strong>自己打指令</strong>才記得住。這份教學每一段都請你打開「終端機 Terminal」照著做一遍。指令打錯了沒關係，第 10 節教你怎麼救回來，大部分錯誤都能復原。
+  </div>
+
+  <div class="path">
+    <div class="stage"><span class="day">Day 1</span><h4>搞懂概念 + 安裝</h4><ul><li>第 1–2 節</li><li>先讀懂「存檔點」的比喻</li><li>裝好 Git、設定名字和 email</li></ul></div>
+    <div class="stage"><span class="day">Day 2</span><h4>本機基本循環</h4><ul><li>第 3–4 節</li><li>熟練 add → commit</li><li>做 5 次以上 commit</li></ul></div>
+    <div class="stage"><span class="day">Day 3</span><h4>看歷史、時光機</h4><ul><li>第 5 節</li><li>log / diff / 回到舊版本</li></ul></div>
+    <div class="stage"><span class="day">Day 4</span><h4>分支</h4><ul><li>第 6 節</li><li>建分支、合併</li><li>刻意製造一次衝突再解掉</li></ul></div>
+    <div class="stage"><span class="day">Day 5</span><h4>GitHub 上線</h4><ul><li>第 7–8 節</li><li>開帳號、登入</li><li>push 你的第一個 repo</li></ul></div>
+    <div class="stage"><span class="day">Day 6</span><h4>協作流程</h4><ul><li>第 9 節</li><li>自己對自己開一次 Pull Request</li></ul></div>
+    <div class="stage"><span class="day">Day 7</span><h4>做作品集</h4><ul><li>第 11 節</li><li>把一個自己的 SQL/Python 專案放上 GitHub</li><li>寫好 README</li></ul></div>
+  </div>
+
+  <h3>✅ 進度清單（點一下就能打勾）</h3>
+  <div class="bar"><div id="prog"></div></div>
+  <div id="checklist"></div>
+</section>
+
+<!-- ============ 1. 是什麼 ============ -->
+<section id="what">
+  <h2><span class="num">1</span>Git 和 GitHub 到底是什麼？</h2>
+  <p class="sub">先用一個比喻搞懂，後面就簡單了。</p>
+
+  <div class="card">
+    你一定看過這種資料夾：
+    <pre><code>報告_v1.docx
+報告_v2.docx
+報告_v2_修改.docx
+報告_最終版.docx
+報告_最終版_真的最終.docx  <span class="c">← 😵 到底哪個才是對的？改了什麼？</span></code></pre>
+    <strong>Git 就是用來解決這個問題的。</strong>它會幫你把專案的每個版本記下來，每存一次就像遊戲裡的<strong>存檔點</strong>。你可以隨時回到之前任何一個存檔，也看得到每次改了哪幾行、是誰改的、為什麼要改。
+  </div>
+
+  <figure class="fig">
+    <svg viewBox="0 0 820 200" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang TC,sans-serif">
+      <line x1="70" y1="90" x2="750" y2="90" stroke="#c9bfae" stroke-width="4"/>
+      <g font-size="14" text-anchor="middle">
+        <circle cx="100" cy="90" r="22" fill="#3a6ea5"/><text x="100" y="95" fill="#fff" font-weight="700">1</text>
+        <text x="100" y="140" fill="#1f2328">建立專案</text><text x="100" y="160" fill="#5b6470" font-size="12">a1b2c3</text>
+        <circle cx="260" cy="90" r="22" fill="#3a6ea5"/><text x="260" y="95" fill="#fff" font-weight="700">2</text>
+        <text x="260" y="140" fill="#1f2328">加入資料清理</text><text x="260" y="160" fill="#5b6470" font-size="12">d4e5f6</text>
+        <circle cx="420" cy="90" r="22" fill="#3a6ea5"/><text x="420" y="95" fill="#fff" font-weight="700">3</text>
+        <text x="420" y="140" fill="#1f2328">新增圖表</text><text x="420" y="160" fill="#5b6470" font-size="12">g7h8i9</text>
+        <circle cx="580" cy="90" r="22" fill="#3a6ea5"/><text x="580" y="95" fill="#fff" font-weight="700">4</text>
+        <text x="580" y="140" fill="#1f2328">修正 SQL bug</text><text x="580" y="160" fill="#5b6470" font-size="12">j1k2l3</text>
+        <circle cx="730" cy="90" r="26" fill="#d1495b"/><text x="730" y="95" fill="#fff" font-weight="700">5</text>
+        <text x="730" y="140" fill="#d1495b" font-weight="700">現在</text>
+      </g>
+      <text x="410" y="35" text-anchor="middle" font-size="16" fill="#1f2328" font-weight="700">每個圓點 = 一個 commit（存檔點），想回去哪個都可以</text>
+      <path d="M700 60 Q 490 0 280 62" fill="none" stroke="#2a9d8f" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ar)"/>
+      <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2a9d8f"/></marker></defs>
+    </svg>
+    <figcaption>Git 的歷史紀錄就是一條「存檔點」時間線</figcaption>
+  </figure>
+
+  <div class="analogy">
+    <div class="card"><h3 style="margin-top:0">🖥️ Git</h3>
+      <p>一個<strong>裝在你電腦上的軟體</strong>，負責記錄版本。<br>不用網路也能用。<br>比喻：<strong>相機</strong>，負責拍下每個時刻。</p></div>
+    <div class="card"><h3 style="margin-top:0">☁️ GitHub</h3>
+      <p>一個<strong>網站</strong>，幫你把 Git 紀錄存到雲端，方便分享和協作。<br>比喻：<strong>雲端相簿</strong>（像 Google Photos），可以備份照片、分享給別人。</p></div>
+  </div>
+
+  <div class="card tip"><b>🎯 為什麼你要學？</b>
+    在 Data／BA 的工作裡，SQL、Python、dbt 這些程式碼幾乎都放在 Git 上管理。面試官也常常會直接點開你的 GitHub 看作品。學會 Git，你可以：① 有一個看得到的作品集 ② 進公司就能跟上團隊流程 ③ 程式改壞了也不怕，隨時能退回去。
+  </div>
+
+  <h3>📖 先記 6 個單字</h3>
+  <table>
+    <tr><th>名詞</th><th>白話意思</th></tr>
+    <tr><td><b>repository</b>（repo）</td><td>被 Git 管理的專案資料夾</td></tr>
+    <tr><td><b>commit</b></td><td>一個存檔點，附上一句說明「這次改了什麼」</td></tr>
+    <tr><td><b>branch</b>（分支）</td><td>一條平行的時間線，可以在上面試新東西，不影響主線</td></tr>
+    <tr><td><b>merge</b>（合併）</td><td>把分支上的改動合回主線</td></tr>
+    <tr><td><b>remote</b>（遠端）</td><td>放在雲端（GitHub）的那份 repo</td></tr>
+    <tr><td><b>push / pull</b></td><td>push＝上傳到 GitHub；pull＝從 GitHub 下載最新版</td></tr>
+  </table>
+</section>
+
+<!-- ============ 2. 安裝 ============ -->
+<section id="install">
+  <h2><span class="num">2</span>安裝與設定</h2>
+  <p class="sub">做一次就好，大約 10 分鐘。</p>
+
+  <h3>步驟 1：打開終端機</h3>
+  <p>按 <code>⌘ Command + 空白鍵</code>，輸入 <code>Terminal</code>，按 Enter。會出現一個黑色或白色的視窗，這就是「終端機」，等一下所有指令都打在這裡。</p>
+  <div class="card idea"><b>🪟 用 Windows？</b>到 <code>git-scm.com</code> 下載 Git for Windows 安裝，裝完會多一個叫 <strong>Git Bash</strong> 的程式。之後本教學的指令都打在 Git Bash 裡，用法和 Mac 的終端機幾乎一樣。</div>
+
+  <h3>步驟 2：確認有沒有 Git</h3>
+<pre><code>git --version</code></pre>
+  <p>如果出現像 <code>git version 2.4x.x</code> 的字，就是已經裝好了。如果跳出視窗問你要不要安裝「命令列開發者工具」，按<strong>安裝</strong>，等它跑完再輸入一次上面的指令。</p>
+
+  <h3>步驟 3：告訴 Git 你是誰</h3>
+  <p>每個 commit 都會記錄作者，所以要先設定名字和 email。<strong>email 請用你等一下要註冊 GitHub 的那一個。</strong></p>
+<pre><code>git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+git config --global init.defaultBranch main   <span class="c"># 主線分支命名為 main（現在的標準）</span></code></pre>
+  <p>檢查設定：</p>
+<pre><code>git config --list</code></pre>
+
+  <h3>步驟 4（建議）：認識 5 個終端機基本指令</h3>
+  <table>
+    <tr><th>指令</th><th>作用</th><th>比喻</th></tr>
+    <tr><td><code>pwd</code></td><td>顯示我現在在哪個資料夾</td><td>「我在哪？」</td></tr>
+    <tr><td><code>ls</code></td><td>列出這個資料夾裡有什麼</td><td>「這裡有什麼？」</td></tr>
+    <tr><td><code>cd 資料夾名</code></td><td>進入某個資料夾</td><td>雙擊打開資料夾</td></tr>
+    <tr><td><code>cd ..</code></td><td>回到上一層</td><td>按「上一頁」</td></tr>
+    <tr><td><code>mkdir 名字</code></td><td>建立新資料夾</td><td>右鍵 → 新增資料夾</td></tr>
+  </table>
+  <div class="card tip"><b>小技巧</b>打指令時按 <code>Tab</code> 會自動補完檔名，按 <code>↑</code> 可以叫出上一個指令。</div>
+</section>
+
+<!-- ============ 3. 三個區域 ============ -->
+<section id="three">
+  <h2><span class="num">3</span>最核心的概念：三個區域</h2>
+  <p class="sub">這一節讀懂了，Git 就學會一半了。</p>
+
+  <div class="card">
+    把 commit 想成<strong>寄包裹</strong>：
+    <ol>
+      <li><strong>工作區</strong>：你的書桌，東西隨便你放、隨便你改。</li>
+      <li><strong>暫存區（Staging）</strong>：紙箱。你挑出這次要寄的東西放進去，不一定要全部放。</li>
+      <li><strong>儲存庫（Repository）</strong>：封箱寄出，變成一個正式紀錄（commit），之後隨時查得到。</li>
+    </ol>
+  </div>
+
+  <figure class="fig">
+    <svg viewBox="0 0 840 290" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang TC,sans-serif">
+      <defs>
+        <marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1f2328"/></marker>
+        <marker id="a3" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#d1495b"/></marker>
+      </defs>
+      <rect x="20" y="40" width="220" height="150" rx="16" fill="#fdf7e8" stroke="#e9b44c" stroke-width="2.5"/>
+      <text x="130" y="75" text-anchor="middle" font-size="19" font-weight="700">🖊️ 工作區</text>
+      <text x="130" y="100" text-anchor="middle" font-size="13" fill="#5b6470">Working Directory</text>
+      <text x="130" y="135" text-anchor="middle" font-size="14">你正在編輯的檔案</text>
+      <text x="130" y="158" text-anchor="middle" font-size="14">（書桌）</text>
+
+      <rect x="310" y="40" width="220" height="150" rx="16" fill="#eef8f6" stroke="#2a9d8f" stroke-width="2.5"/>
+      <text x="420" y="75" text-anchor="middle" font-size="19" font-weight="700">📦 暫存區</text>
+      <text x="420" y="100" text-anchor="middle" font-size="13" fill="#5b6470">Staging Area</text>
+      <text x="420" y="135" text-anchor="middle" font-size="14">準備要存的改動</text>
+      <text x="420" y="158" text-anchor="middle" font-size="14">（紙箱）</text>
+
+      <rect x="600" y="40" width="220" height="150" rx="16" fill="#eaf1f9" stroke="#3a6ea5" stroke-width="2.5"/>
+      <text x="710" y="75" text-anchor="middle" font-size="19" font-weight="700">🗄️ 儲存庫</text>
+      <text x="710" y="100" text-anchor="middle" font-size="13" fill="#5b6470">Repository (.git)</text>
+      <text x="710" y="135" text-anchor="middle" font-size="14">正式的存檔紀錄</text>
+      <text x="710" y="158" text-anchor="middle" font-size="14">（已寄出的包裹）</text>
+
+      <line x1="245" y1="100" x2="303" y2="100" stroke="#1f2328" stroke-width="2.5" marker-end="url(#a2)"/>
+      <text x="275" y="25" text-anchor="middle" font-size="14" font-weight="700" fill="#2a9d8f">git add</text>
+      <line x1="275" y1="30" x2="275" y2="92" stroke="#2a9d8f" stroke-dasharray="3 3"/>
+
+      <line x1="535" y1="100" x2="593" y2="100" stroke="#1f2328" stroke-width="2.5" marker-end="url(#a2)"/>
+      <text x="565" y="25" text-anchor="middle" font-size="14" font-weight="700" fill="#3a6ea5">git commit</text>
+      <line x1="565" y1="30" x2="565" y2="92" stroke="#3a6ea5" stroke-dasharray="3 3"/>
+
+      <path d="M700 195 Q 420 290 140 195" fill="none" stroke="#d1495b" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#a3)"/>
+      <text x="420" y="268" text-anchor="middle" font-size="14" fill="#d1495b" font-weight="700">git checkout / git restore：把舊版本拿回書桌</text>
+    </svg>
+    <figcaption>改檔案 → <code>git add</code> 放進紙箱 → <code>git commit</code> 封箱存檔</figcaption>
+  </figure>
+
+  <div class="card idea"><b>🤔 為什麼要多一個「暫存區」？</b>
+    假設你今天同時改了 SQL 查詢，又順手改了 README 的錯字。這是兩件不相關的事，分成兩個 commit 會比較清楚。有暫存區，你就可以先只放 SQL 進去存一次，再放 README 存一次。
+  </div>
+
+  <p>隨時可以用這個指令看「現在每個檔案在哪個區域」，<strong>這會是你最常用的指令</strong>：</p>
+<pre><code>git status</code></pre>
+</section>
+
+<!-- ============ 4. 第一個 commit ============ -->
+<section id="first">
+  <h2><span class="num">4</span>動手做：你的第一個 commit</h2>
+  <p class="sub">跟著一行一行打，每打完一行就看一下輸出。</p>
+
+  <h3>① 建立專案資料夾，讓 Git 開始管理它</h3>
+<pre><code><span class="c"># 在桌面建立一個練習資料夾並進入</span>
+cd ~/Desktop
+mkdir git-practice
+cd git-practice
+
+<span class="c"># 讓 Git 開始管理這個資料夾（只要做一次）</span>
+git init</code></pre>
+  <p>你會看到 <code>Initialized empty Git repository...</code>。Git 在資料夾裡建了一個隱藏的 <code>.git</code> 資料夾，所有存檔紀錄都放在裡面。<strong>不要手動去動它。</strong></p>
+
+  <h3>② 建立一個檔案</h3>
+<pre><code>echo "# 我的第一個 Git 專案" > README.md
+git status</code></pre>
+  <p>輸出會出現紅字 <code>Untracked files: README.md</code>，意思是：Git 看到這個新檔案了，但還沒開始追蹤它（它還在書桌上）。</p>
+
+  <h3>③ 放進暫存區</h3>
+<pre><code>git add README.md
+git status</code></pre>
+  <p>現在變成綠字 <code>Changes to be committed</code>，表示已經放進紙箱了。</p>
+  <div class="card tip"><b>小技巧</b><code>git add .</code>（後面是一個點）會把所有改過的檔案一次放進去，很常用。</div>
+
+  <h3>④ 存檔（commit）</h3>
+<pre><code>git commit -m "新增 README"</code></pre>
+  <p><code>-m</code> 後面接的是這次存檔的說明。🎉 恭喜，你的第一個 commit 完成了！</p>
+
+  <h3>⑤ 再做一次，練出手感</h3>
+<pre><code>echo "這個專案用來練習 Git" >> README.md
+git status              <span class="c"># 會顯示 modified: README.md</span>
+git diff                <span class="c"># 看改了什麼（綠色 + 是新增的行），按 q 離開</span>
+git add .
+git commit -m "README 加上專案說明"</code></pre>
+
+  <div class="card">
+    <h3 style="margin-top:0">✍️ commit 說明怎麼寫比較好？</h3>
+    <table>
+      <tr><th>❌ 不好</th><th>✅ 好</th></tr>
+      <tr><td>update</td><td>新增 7 日留存率的 SQL 查詢</td></tr>
+      <tr><td>fix</td><td>修正訂單金額重複計算的 bug</td></tr>
+      <tr><td>asdf</td><td>README 補上資料來源說明</td></tr>
+    </table>
+    <p>原則就是：<strong>讓三個月後的你一眼就看懂這次改了什麼。</strong></p>
+  </div>
+
+  <div class="card warn"><b>⚠️ 不小心進到一個奇怪的編輯畫面？</b>
+    如果打 <code>git commit</code> 時忘了加 <code>-m</code>，會跳進一個叫 Vim 的編輯器，很多人卡在這裡出不來。解法：按 <code>Esc</code>，輸入 <code>:q!</code>，按 Enter 就能離開，然後重新打一次加上 <code>-m "說明"</code> 的指令。
+  </div>
+</section>
+
+<!-- ============ 5. 歷史 ============ -->
+<section id="history">
+  <h2><span class="num">5</span>看歷史 & 時光機</h2>
+
+<pre><code>git log --oneline</code></pre>
+<pre><code><span class="o">b7c9e21</span> README 加上專案說明
+<span class="o">a1f3d08</span> 新增 README</code></pre>
+  <p>前面那串亂碼（例如 <code>b7c9e21</code>）是每個 commit 的 ID，就像存檔點的編號，之後要指定某個 commit 時會用到。</p>
+
+  <table>
+    <tr><th>我想…</th><th>指令</th></tr>
+    <tr><td>看所有歷史（精簡版）</td><td><code>git log --oneline</code></td></tr>
+    <tr><td>看歷史 + 分支的圖</td><td><code>git log --oneline --graph --all</code></td></tr>
+    <tr><td>看還沒 add 的改動</td><td><code>git diff</code></td></tr>
+    <tr><td>看已經 add、還沒 commit 的改動</td><td><code>git diff --staged</code></td></tr>
+    <tr><td>看某次 commit 改了什麼</td><td><code>git show a1f3d08</code></td></tr>
+    <tr><td>把檔案改壞了，想恢復成上次 commit 的樣子</td><td><code>git restore README.md</code></td></tr>
+    <tr><td>暫時回去看舊版本</td><td><code>git switch --detach a1f3d08</code>（看完後用 <code>git switch main</code> 回來）</td></tr>
+  </table>
+  <div class="card tip"><b>小提醒</b><code>git log</code> 或 <code>git diff</code> 的內容太長時，畫面會停住讓你捲動。按 <code>q</code> 就能離開。</div>
+</section>
+
+<!-- ============ 6. 分支 ============ -->
+<section id="branch">
+  <h2><span class="num">6</span>分支（Branch）：平行宇宙</h2>
+  <p class="sub">想試一個新做法，又怕把原本能跑的東西改壞？那就開一個分支。</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 840 260" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang TC,sans-serif">
+      <line x1="60" y1="80" x2="780" y2="80" stroke="#3a6ea5" stroke-width="5"/>
+      <path d="M260 80 C 300 80, 300 180, 360 180 L 560 180 C 620 180, 620 80, 660 80" fill="none" stroke="#7b5ea7" stroke-width="5"/>
+      <g>
+        <circle cx="100" cy="80" r="16" fill="#3a6ea5"/>
+        <circle cx="260" cy="80" r="16" fill="#3a6ea5"/>
+        <circle cx="460" cy="80" r="16" fill="#3a6ea5"/>
+        <circle cx="400" cy="180" r="16" fill="#7b5ea7"/>
+        <circle cx="520" cy="180" r="16" fill="#7b5ea7"/>
+        <circle cx="660" cy="80" r="20" fill="#d1495b"/>
+      </g>
+      <text x="60" y="40" font-size="16" font-weight="700" fill="#3a6ea5">main（主線：永遠保持能用的版本）</text>
+      <text x="380" y="230" font-size="16" font-weight="700" fill="#7b5ea7">feature-chart（實驗：新增圖表）</text>
+      <text x="260" y="118" text-anchor="middle" font-size="13" fill="#5b6470">① 從這裡分出去</text>
+      <text x="460" y="118" text-anchor="middle" font-size="13" fill="#5b6470">主線也可以繼續前進</text>
+      <text x="660" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="#d1495b">② merge 合併回來</text>
+    </svg>
+    <figcaption>在分支上隨便實驗，成功了就合併回 main；失敗了就把分支刪掉，main 完全不受影響</figcaption>
+  </figure>
+
+  <h3>動手做</h3>
+<pre><code>git branch                      <span class="c"># 列出所有分支，* 標的是你現在所在的分支</span>
+git switch -c feature-chart     <span class="c"># 建立新分支並切換過去</span>
+
+echo "圖表功能" > chart.py
+git add .
+git commit -m "新增圖表功能"
+
+git switch main                 <span class="c"># 切回主線，chart.py 不見了（因為它只存在於分支上）</span>
+ls
+
+git merge feature-chart         <span class="c"># 把分支合併進 main</span>
+ls                              <span class="c"># chart.py 出現了！</span>
+
+git branch -d feature-chart     <span class="c"># 合併完就可以刪掉分支</span></code></pre>
+
+  <h3>💥 衝突（Conflict）：不用怕</h3>
+  <p>如果兩條分支<strong>改到同一個檔案的同一行</strong>，Git 不知道該留哪一個，就會請你自己決定。打開那個檔案，會看到像這樣的內容：</p>
+<pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+SELECT * FROM users WHERE country = 'TW';      <span class="c">← main 的版本</span>
+=======
+SELECT * FROM users WHERE country = 'SG';      <span class="c">← 分支的版本</span>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature-x</code></pre>
+  <div class="card">
+    <strong>解決步驟：</strong>
+    <ol>
+      <li>改成你要的最終內容，並<strong>把 <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>、<code>=======</code>、<code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> 這三行標記刪掉</strong></li>
+      <li><code>git add 檔名</code></li>
+      <li><code>git commit -m "解決衝突"</code></li>
+    </ol>
+    用 VS Code 打開衝突的檔案，會直接出現「Accept Current / Accept Incoming / Accept Both」按鈕，點一下就好，比手動改簡單很多。
+  </div>
+
+  <details><summary>🏋️ 練習：故意製造一次衝突</summary>
+<pre><code>git switch -c test-conflict
+echo "分支的內容" > README.md
+git commit -am "分支改 README"
+git switch main
+echo "main 的內容" > README.md
+git commit -am "main 改 README"
+git merge test-conflict        <span class="c"># 💥 CONFLICT！照上面的步驟解掉它</span></code></pre>
+  <p>（<code>-am</code> 是 add 加 commit 一起做，只對 Git 已經在追蹤的檔案有效。）</p>
+  </details>
+</section>
+
+<!-- ============ 7. GitHub ============ -->
+<section id="github">
+  <h2><span class="num">7</span>GitHub：把專案放上雲端</h2>
+
+  <figure class="fig">
+    <svg viewBox="0 0 840 280" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang TC,sans-serif">
+      <defs>
+        <marker id="up" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2a9d8f"/></marker>
+        <marker id="dn" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3a6ea5"/></marker>
+      </defs>
+      <ellipse cx="420" cy="62" rx="190" ry="48" fill="#eaf1f9" stroke="#3a6ea5" stroke-width="2.5"/>
+      <text x="420" y="58" text-anchor="middle" font-size="19" font-weight="700">☁️ GitHub（remote / origin）</text>
+      <text x="420" y="82" text-anchor="middle" font-size="13" fill="#5b6470">github.com/你的帳號/專案名</text>
+
+      <rect x="60" y="190" width="240" height="70" rx="14" fill="#fff" stroke="#1f2328" stroke-width="2"/>
+      <text x="180" y="222" text-anchor="middle" font-size="16" font-weight="700">💻 你的 Mac</text>
+      <text x="180" y="244" text-anchor="middle" font-size="13" fill="#5b6470">本機 repo</text>
+
+      <rect x="540" y="190" width="240" height="70" rx="14" fill="#fff" stroke="#1f2328" stroke-width="2"/>
+      <text x="660" y="222" text-anchor="middle" font-size="16" font-weight="700">💻 同事 / 公司電腦</text>
+      <text x="660" y="244" text-anchor="middle" font-size="13" fill="#5b6470">另一份本機 repo</text>
+
+      <line x1="150" y1="185" x2="270" y2="110" stroke="#2a9d8f" stroke-width="3" marker-end="url(#up)"/>
+      <text x="150" y="140" font-size="15" font-weight="700" fill="#2a9d8f">git push ⬆</text>
+      <line x1="320" y1="112" x2="215" y2="185" stroke="#3a6ea5" stroke-width="3" marker-end="url(#dn)"/>
+      <text x="285" y="175" font-size="15" font-weight="700" fill="#3a6ea5">git pull ⬇</text>
+
+      <line x1="570" y1="110" x2="680" y2="185" stroke="#3a6ea5" stroke-width="3" marker-end="url(#dn)"/>
+      <text x="650" y="140" font-size="15" font-weight="700" fill="#3a6ea5">git clone / pull ⬇</text>
+    </svg>
+    <figcaption>GitHub 就像中央倉庫，每個人都從這裡拿最新版，改完再送回來</figcaption>
+  </figure>
+
+  <h3>步驟 1：註冊帳號</h3>
+  <p>到 <code>github.com</code> 註冊。<strong>使用者名稱會出現在你的作品集網址裡</strong>（例如 <code>github.com/your-name</code>），而且會寫在履歷上，建議用專業一點的名字。</p>
+
+  <h3>步驟 2：讓電腦登入 GitHub（最簡單的方法）</h3>
+  <p>GitHub 已經不能直接用密碼 push 了。對新手來說，最簡單的是裝官方的 <strong>GitHub CLI</strong>，它會用瀏覽器幫你登入：</p>
+<pre><code><span class="c"># Mac：先裝 Homebrew（Mac 的軟體安裝工具），已經裝過可以跳過</span>
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+<span class="c"># 安裝 GitHub CLI 並登入</span>
+brew install gh
+<span class="c"># Windows 改用：winget install --id GitHub.cli</span>
+gh auth login
+<span class="c"># 選擇：GitHub.com → HTTPS → Yes → Login with a web browser</span>
+<span class="c"># 畫面會給你一組代碼，貼到瀏覽器裡就完成了</span></code></pre>
+  <div class="card idea"><b>不想打指令？</b>
+    也可以裝 <strong>GitHub Desktop</strong>（圖形介面的 App），或在 <strong>VS Code</strong> 左側的「原始碼控制」面板登入。不過還是建議先用指令學會，因為懂指令之後，圖形介面在做什麼你也會看得懂，反過來就不一定了。
+  </div>
+</section>
+
+<!-- ============ 8. push pull ============ -->
+<section id="push">
+  <h2><span class="num">8</span>push、pull、clone</h2>
+
+  <h3>情況 A：把電腦上已經有的專案放上 GitHub</h3>
+  <ol>
+    <li>在 GitHub 右上角按 <strong>+ → New repository</strong></li>
+    <li>名字填 <code>git-practice</code>，選 Public，<strong>其他選項都不要勾</strong>（因為你本機已經有 README 了）</li>
+    <li>按 Create，然後回到終端機：</li>
+  </ol>
+<pre><code>cd ~/Desktop/git-practice
+git remote add origin https://github.com/你的帳號/git-practice.git   <span class="c"># 告訴 Git 雲端倉庫在哪</span>
+git push -u origin main                                               <span class="c"># 第一次上傳</span></code></pre>
+  <p>重新整理 GitHub 網頁，你的檔案就在上面了 🎉。<br>之後每次只要打 <code>git push</code> 就好（<code>-u</code> 只有第一次需要加）。</p>
+
+  <div class="card tip"><b>懶人一行搞定</b>裝好 gh 之後，在專案資料夾裡打 <code>gh repo create --source=. --public --push</code>，它會自動幫你建立 GitHub repo 並上傳。</div>
+
+  <h3>情況 B：把 GitHub 上的專案下載到電腦</h3>
+<pre><code>git clone https://github.com/某人/某專案.git
+cd 某專案</code></pre>
+
+  <h3>每天的標準流程 🔁</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 840 130" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang TC,sans-serif">
+      <defs><marker id="a5" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b6470"/></marker></defs>
+      <g font-size="15" text-anchor="middle" font-weight="700">
+        <rect x="10" y="35" width="140" height="56" rx="28" fill="#3a6ea5"/><text x="80" y="69" fill="#fff">git pull</text>
+        <rect x="180" y="35" width="140" height="56" rx="28" fill="#e9b44c"/><text x="250" y="69" fill="#1f2328">改程式</text>
+        <rect x="350" y="35" width="140" height="56" rx="28" fill="#2a9d8f"/><text x="420" y="69" fill="#fff">git add .</text>
+        <rect x="520" y="35" width="140" height="56" rx="28" fill="#7b5ea7"/><text x="590" y="69" fill="#fff">git commit</text>
+        <rect x="690" y="35" width="140" height="56" rx="28" fill="#d1495b"/><text x="760" y="69" fill="#fff">git push</text>
+      </g>
+      <g stroke="#5b6470" stroke-width="2.5" marker-end="url(#a5)">
+        <line x1="152" y1="63" x2="176" y2="63"/><line x1="322" y1="63" x2="346" y2="63"/>
+        <line x1="492" y1="63" x2="516" y2="63"/><line x1="662" y1="63" x2="686" y2="63"/>
+      </g>
+      <text x="420" y="120" text-anchor="middle" font-size="13" fill="#5b6470">開工先 pull，收工記得 push</text>
+    </svg>
+  </figure>
+
+  <h3>🙈 .gitignore：不要上傳的東西</h3>
+  <p>在專案根目錄建立一個叫 <code>.gitignore</code> 的檔案，把不想被 Git 追蹤的檔案寫進去：</p>
+<pre><code><span class="c"># .gitignore 範例（資料分析專案）</span>
+.DS_Store           <span class="c"># Mac 自動產生的垃圾檔</span>
+.env                <span class="c"># 密碼、API key！！絕對不能上傳</span>
+__pycache__/
+.ipynb_checkpoints/
+data/raw/           <span class="c"># 很大或有機密的原始資料</span>
+*.csv</code></pre>
+  <div class="card warn"><b>🚨 非常重要：資安</b>
+    <strong>絕對不要把公司資料、資料庫密碼、API key、客戶資料上傳到公開的 GitHub。</strong>就算之後刪掉，Git 歷史裡還是找得到。作品集請一律用公開資料集（Kaggle、政府開放資料等）。公司的營運、交易或客戶數據，就算拿掉名字也不要放上去。
+  </div>
+</section>
+
+<!-- ============ 9. PR ============ -->
+<section id="pr">
+  <h2><span class="num">9</span>Pull Request：團隊協作的方式</h2>
+  <p class="sub">進公司之後，大概 90% 的時間都在用這個流程。</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 840 170" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang TC,sans-serif">
+      <defs><marker id="a6" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b6470"/></marker></defs>
+      <g font-size="14" text-anchor="middle">
+        <rect x="5" y="30" width="150" height="80" rx="12" fill="#f3ede3" stroke="#c9bfae"/><text x="80" y="62" font-weight="700">① 開分支</text><text x="80" y="86" fill="#5b6470" font-size="12">git switch -c fix-sql</text>
+        <rect x="175" y="30" width="150" height="80" rx="12" fill="#f3ede3" stroke="#c9bfae"/><text x="250" y="62" font-weight="700">② 改 + commit</text><text x="250" y="86" fill="#5b6470" font-size="12">可以 commit 很多次</text>
+        <rect x="345" y="30" width="150" height="80" rx="12" fill="#f3ede3" stroke="#c9bfae"/><text x="420" y="62" font-weight="700">③ push 分支</text><text x="420" y="86" fill="#5b6470" font-size="12">git push -u origin fix-sql</text>
+        <rect x="515" y="30" width="150" height="80" rx="12" fill="#eaf1f9" stroke="#3a6ea5"/><text x="590" y="62" font-weight="700">④ 開 PR</text><text x="590" y="86" fill="#5b6470" font-size="12">同事 review、留言</text>
+        <rect x="685" y="30" width="150" height="80" rx="12" fill="#eef8f6" stroke="#2a9d8f"/><text x="760" y="62" font-weight="700">⑤ Merge</text><text x="760" y="86" fill="#5b6470" font-size="12">合進 main ✅</text>
+      </g>
+      <g stroke="#5b6470" stroke-width="2.5" marker-end="url(#a6)">
+        <line x1="157" y1="70" x2="171" y2="70"/><line x1="327" y1="70" x2="341" y2="70"/>
+        <line x1="497" y1="70" x2="511" y2="70"/><line x1="667" y1="70" x2="681" y2="70"/>
+      </g>
+      <text x="420" y="150" text-anchor="middle" font-size="14" fill="#5b6470">PR = 「我改好了，請幫我檢查一下，沒問題就合進主線」</text>
+    </svg>
+  </figure>
+
+  <h3>自己練一次（一個人也能練）</h3>
+<pre><code>cd ~/Desktop/git-practice
+git switch -c add-analysis
+echo "SELECT COUNT(*) FROM users;" > analysis.sql
+git add .
+git commit -m "新增使用者數量查詢"
+git push -u origin add-analysis</code></pre>
+  <ol>
+    <li>打開 GitHub 的 repo 頁面，上方會出現黃色提示框 <strong>Compare & pull request</strong>，點下去</li>
+    <li>寫標題和說明（改了什麼、為什麼改），按 <strong>Create pull request</strong></li>
+    <li>點 <strong>Files changed</strong> 分頁，看看 review 介面長什麼樣子，也可以試著在某一行留言</li>
+    <li>按 <strong>Merge pull request</strong> → Confirm</li>
+    <li>回到終端機，把最新的 main 拉回來：</li>
+  </ol>
+<pre><code>git switch main
+git pull
+git branch -d add-analysis</code></pre>
+
+  <details><summary>📚 進階名詞：fork 是什麼？</summary>
+  <p>Fork 是把<strong>別人的</strong> repo 複製一份到<strong>你的</strong>帳號下。想參與開源專案、但又沒有權限直接改的時候會用到：先 fork → 在自己那份上改 → 再對原專案開 PR。在公司裡通常大家都有權限，所以比較少用。</p>
+  </details>
+</section>
+
+<!-- ============ 10. 救命 ============ -->
+<section id="oops">
+  <h2><span class="num">10</span>救命指南：搞砸了怎麼辦？</h2>
+  <p class="sub">先深呼吸。只要 commit 過的東西，幾乎都救得回來。</p>
+  <table>
+    <tr><th>😱 狀況</th><th>💊 解法</th></tr>
+    <tr><td>commit 說明打錯了（還沒 push）</td><td><code>git commit --amend -m "正確的說明"</code></td></tr>
+    <tr><td>commit 時漏了一個檔案（還沒 push）</td><td><code>git add 漏掉的檔案</code> → <code>git commit --amend --no-edit</code></td></tr>
+    <tr><td>不小心 add 了不想要的檔案</td><td><code>git restore --staged 檔名</code>（從紙箱拿出來，檔案內容不會被改）</td></tr>
+    <tr><td>檔案改壞了，想恢復成上次 commit 的樣子</td><td><code>git restore 檔名</code> ⚠️ 還沒存檔的改動會消失</td></tr>
+    <tr><td>想取消最後一次 commit，但保留改過的內容</td><td><code>git reset --soft HEAD~1</code></td></tr>
+    <tr><td>已經 push 了，想撤銷某個 commit</td><td><code>git revert commitID</code>（會新增一個「反向」的 commit，安全、不改寫歷史）</td></tr>
+    <tr><td>push 被拒絕：<code>rejected ... fetch first</code></td><td>代表雲端有你沒有的新東西。先 <code>git pull</code>，再 <code>git push</code></td></tr>
+    <tr><td>改到一半要切去別的分支</td><td><code>git stash</code>（先收起來）→ 切過去做事 → 切回來 → <code>git stash pop</code></td></tr>
+    <tr><td>真的搞到一團亂</td><td><code>git reflog</code> 會列出你做過的每一個動作，可以從裡面找回之前的狀態</td></tr>
+    <tr><td>不小心把密碼 push 上去了</td><td><strong>馬上去把那組密碼／key 換掉</strong>，這比從歷史裡刪掉更重要</td></tr>
+  </table>
+  <div class="card warn"><b>⚠️ 新手先不要用的指令</b>
+    <code>git push --force</code> 和 <code>git reset --hard</code> 會直接刪掉紀錄。等你更熟了、也清楚自己在做什麼，再考慮使用。
+  </div>
+</section>
+
+<!-- ============ 11. 作品集 ============ -->
+<section id="portfolio">
+  <h2><span class="num">11</span>畢業專題：做一個作品集 repo</h2>
+  <p class="sub">學 Git 最好的方法就是拿來做一件真的有用的事，如果你在找數據分析（DA/BA）相關的工作，這件事剛好也能直接幫到你。</p>
+
+  <h3>建議的資料夾結構</h3>
+<pre><code>ecommerce-retention-analysis/
+├── README.md              <span class="c">← 最重要！面試官第一眼就會看到這個</span>
+├── .gitignore
+├── data/
+│   └── README.md          <span class="c">← 說明資料來源（例如 Kaggle 連結），不要放大檔案</span>
+├── sql/
+│   ├── 01_cleaning.sql
+│   └── 02_cohort_retention.sql
+├── notebooks/
+│   └── analysis.ipynb
+└── images/
+    └── retention_chart.png</code></pre>
+
+  <h3>README 範本</h3>
+<pre><code># 電商用戶留存分析
+
+## 📌 商業問題
+新用戶在首購之後 30 天內的留存率是多少？哪些渠道帶進來的用戶留存最好？
+
+## 🗂️ 資料
+Kaggle – Brazilian E-Commerce（約 10 萬筆訂單）
+
+## 🛠️ 工具
+SQL (PostgreSQL)、Python (pandas, matplotlib)
+
+## 🔍 主要發現
+1. ……
+2. ……
+
+![留存曲線](images/retention_chart.png)
+
+## 💡 建議
+……</code></pre>
+
+  <div class="card tip"><b>加分技巧</b>
+    ① 在 GitHub 個人頁建立一個跟帳號<strong>同名</strong>的 repo（例如 <code>your-name/your-name</code>），裡面的 README 會直接顯示在你的個人首頁，可以當成自我介紹。<br>
+    ② 把最好的 3 個專案 <strong>Pin</strong>（釘選）在個人頁上。<br>
+    ③ 規律地 commit，讓你個人頁上的綠色格子圖慢慢變多。<br>
+    ④ 履歷上直接放 GitHub 連結。
+  </div>
+</section>
+
+<!-- ============ 12. 速查表 ============ -->
+<section id="cheat">
+  <h2><span class="num">12</span>速查表（建議截圖或印出來）</h2>
+  <table>
+    <tr><th>類別</th><th>指令</th><th>作用</th></tr>
+    <tr><td rowspan="2">開始</td><td><code>git init</code></td><td>讓目前的資料夾變成 repo</td></tr>
+    <tr><td><code>git clone 網址</code></td><td>下載 GitHub 上的 repo</td></tr>
+    <tr><td rowspan="4">日常</td><td><code>git status</code></td><td>看現在的狀態（最常用！）</td></tr>
+    <tr><td><code>git add .</code></td><td>把所有改動放進暫存區</td></tr>
+    <tr><td><code>git commit -m "說明"</code></td><td>存檔</td></tr>
+    <tr><td><code>git diff</code></td><td>看改了什麼</td></tr>
+    <tr><td rowspan="2">歷史</td><td><code>git log --oneline --graph</code></td><td>看歷史紀錄</td></tr>
+    <tr><td><code>git restore 檔名</code></td><td>還原檔案</td></tr>
+    <tr><td rowspan="4">分支</td><td><code>git branch</code></td><td>列出分支</td></tr>
+    <tr><td><code>git switch -c 名字</code></td><td>建立並切換到新分支</td></tr>
+    <tr><td><code>git switch main</code></td><td>切回 main</td></tr>
+    <tr><td><code>git merge 名字</code></td><td>把某個分支合併進目前的分支</td></tr>
+    <tr><td rowspan="3">遠端</td><td><code>git push</code></td><td>上傳</td></tr>
+    <tr><td><code>git pull</code></td><td>下載最新版並合併</td></tr>
+    <tr><td><code>git remote -v</code></td><td>看連到哪個 GitHub repo</td></tr>
+  </table>
+</section>
+
+<!-- ============ 13. 測驗 ============ -->
+<section id="quiz" class="quiz">
+  <h2><span class="num">13</span>小測驗：檢查一下自己懂了沒</h2>
+  <p class="sub">點選答案就會顯示解釋。</p>
+  <div id="quizbox"></div>
+  <p id="score" style="font-weight:700;font-size:18px"></p>
+</section>
+
+<section>
+  <h2><span class="num">→</span>學完之後可以看的資源</h2>
+  <div class="card">
+    <p><b>Learn Git Branching</b>（learngitbranching.js.org）：互動式的視覺化練習，有中文版，<strong>非常推薦</strong>，能幫你把分支的概念練熟。</p>
+    <p><b>GitHub Skills</b>（skills.github.com）：GitHub 官方的免費實作課程。</p>
+    <p><b>Pro Git</b>（git-scm.com/book/zh-tw）：官方的免費電子書，有繁體中文版，想深入了解時再讀。</p>
+    <p><b>VS Code</b>：內建 Git 功能，可以一邊用指令、一邊對照圖形介面。</p>
+  </div>
+</section>
+
+</main>
+<footer>做完的每一步都會變成一個 commit，慢慢累積就好 🌱</footer>
+
+<script>
+// 複製按鈕
+document.querySelectorAll('pre').forEach(p=>{
+  const b=document.createElement('button');b.className='copy';b.textContent='複製';
+  b.onclick=()=>{
+    const t=p.querySelector('code').innerText.split('\n').map(l=>l.replace(/\s+#.*$/,'').replace(/\s+←.*$/,'')).join('\n');
+    navigator.clipboard.writeText(t).then(()=>{b.textContent='已複製 ✓';setTimeout(()=>b.textContent='複製',1500)});
+  };
+  p.appendChild(b);
+});
+
+// 進度清單
+const tasks=[
+ '打開終端機，確認 git --version 有結果',
+ '設定 user.name 和 user.email',
+ '建立 git-practice 並 git init',
+ '完成第一個 commit',
+ '用 git log --oneline 看到至少 5 個 commit',
+ '用 git diff 看懂改動內容',
+ '建立分支並合併回 main',
+ '故意製造一次衝突並解決',
+ '註冊 GitHub 並用 gh auth login 登入',
+ '第一次 git push 成功',
+ '加上 .gitignore',
+ '自己開一次 Pull Request 並 merge',
+ '在 learngitbranching.js.org 完成「主要」的前 4 關',
+ '把一個自己的專案放上 GitHub，附上完整的 README'
+];
+// ---- 本機紀錄（只存在這台裝置的這個瀏覽器）----
+const KEY='git-github-tutorial-zhTW-v1-progress';
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(saved))}catch(e){}}
+const saved=load();
+saved.tasks=saved.tasks||{};saved.quiz=saved.quiz||{};
+
+const cl=document.getElementById('checklist'),prog=document.getElementById('prog');
+const state=tasks.map((t,i)=>!!saved.tasks[i]);
+tasks.forEach((t,i)=>{
+  const d=document.createElement('label');d.className='check'+(state[i]?' done':'');
+  d.innerHTML=`<input type="checkbox"${state[i]?' checked':''}><span>${t}</span>`;
+  d.querySelector('input').onchange=e=>{
+    state[i]=e.target.checked;d.classList.toggle('done',state[i]);
+    saved.tasks[i]=state[i];save();upd();
+  };
+  cl.appendChild(d);
+});
+const info=document.createElement('p');info.style.cssText='font-size:14px;color:#5b6470;margin-top:12px';
+info.innerHTML='💾 進度會自動存在這台裝置的瀏覽器裡，關掉再開也還在。 <button id="resetAll" style="margin-left:8px;border:1px solid #e4ddd2;background:#fff;border-radius:8px;padding:3px 10px;cursor:pointer;font-family:inherit">重設所有進度</button>';
+cl.after(info);
+document.getElementById('resetAll').onclick=()=>{
+  if(confirm('確定要清除所有打勾和測驗紀錄嗎？')){try{localStorage.removeItem(KEY)}catch(e){};location.reload()}
+};
+function upd(){
+  const n=state.filter(Boolean).length;
+  prog.style.width=(n/tasks.length*100)+'%';
+  prog.title=`${n} / ${tasks.length}`;
+}
+upd();
+
+// 測驗
+const Q=[
+ {q:'Git 和 GitHub 的關係是？',o:['它們是同一個東西','Git 是電腦上的版本控制軟體，GitHub 是放 Git 專案的網站','GitHub 是 Git 的新版本'],a:1,e:'Git 是相機，GitHub 是雲端相簿。不用 GitHub 也能用 Git。'},
+ {q:'改完檔案後，要存成一個 commit，正確順序是？',o:['git commit → git add','git push → git commit','git add → git commit'],a:2,e:'先把改動放進紙箱（add），再封箱（commit）。'},
+ {q:'你想看現在哪些檔案被改過、哪些已經 add 了，用哪個指令？',o:['git status','git log','git push'],a:0,e:'git status 是最常用的指令，不知道現在是什麼狀況時就先打它。'},
+ {q:'想試一個新的分析方法，但不想影響原本能跑的程式，應該？',o:['複製整個資料夾改名','開一個新分支','直接在 main 上改'],a:1,e:'分支就是為了這種情況存在的，成功了就 merge，失敗了就刪掉。'},
+ {q:'git push 出現 rejected，提示 fetch first，代表？',o:['GitHub 壞掉了','雲端有你本機沒有的新 commit，要先 git pull','你的密碼錯了'],a:1,e:'先 pull 把別人的改動拉下來（有衝突就解掉），再 push。'},
+ {q:'以下哪個「不應該」放進公開的 GitHub repo？',o:['README.md','分析用的 SQL 檔','含有資料庫密碼的 .env 檔'],a:2,e:'密碼和 key 要寫進 .gitignore。萬一不小心上傳了，要馬上把密碼換掉。'},
+ {q:'Pull Request 的用途是？',o:['從 GitHub 下載程式碼','請別人檢查你在分支上的改動，確認後合併進主線','刪除分支'],a:1,e:'PR 是團隊協作的核心流程：開分支 → push → 開 PR → review → merge。'},
+];
+const qb=document.getElementById('quizbox');let score=0,answered=0;
+Q.forEach((x,i)=>{
+  const d=document.createElement('div');d.className='q card';
+  d.innerHTML=`<b>Q${i+1}. ${x.q}</b>`+x.o.map((o,j)=>`<button class="opt" data-j="${j}">${String.fromCharCode(65+j)}. ${o}</button>`).join('')+`<div class="exp">💡 ${x.e}</div>`;
+  let done=false;
+  const pick=(j,persist)=>{
+    if(done)return;done=true;answered++;
+    const opts=d.querySelectorAll('.opt'),b=opts[j];
+    if(j===x.a){b.classList.add('right');score++}else{b.classList.add('wrong');opts[x.a].classList.add('right')}
+    d.querySelector('.exp').style.display='block';
+    if(persist){saved.quiz[i]=j;save()}
+    if(answered===Q.length)document.getElementById('score').textContent=`你的分數：${score} / ${Q.length} ${score===Q.length?'🎉 全對！可以去做作品集了':'👍 把錯的那幾題對應的章節再看一次'}`;
+  };
+  d.querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(+b.dataset.j,true));
+  qb.appendChild(d);
+  if(saved.quiz[i]!==undefined)pick(saved.quiz[i],false);
+});
+const rq=document.createElement('button');
+rq.textContent='重新作答';rq.style.cssText='border:1px solid #e4ddd2;background:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font-family:inherit;font-size:15px';
+rq.onclick=()=>{saved.quiz={};save();location.hash='quiz';location.reload()};
+document.getElementById('score').after(rq);
+</script>
+</body>
+</html>
