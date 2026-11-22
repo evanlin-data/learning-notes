@@ -2,7 +2,7 @@
 
 給新手的繁體中文圖解教學，我每學一個新主題就整理一篇放上來。
 
-🌐 網站：https://your-name.github.io/learning-notes/
+🌐 網站：https://evanlin-data.github.io/learning-notes/
 
 ## 目前的教學
 
