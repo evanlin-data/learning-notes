@@ -1,0 +1,62 @@
+---
+/**
+ * 顯示 src/diagrams/ 裡的 SVG 圖解。
+ * 用法：<Diagram name="git-timeline" caption="圖說，可用 <code>" />
+ * 新增圖解：把 .svg 檔放進 src/diagrams/，name 就是檔名（不含 .svg）。
+ */
+interface Props {
+	name: string;
+	caption?: string;
+	/** 手機上圖解不會再縮小到比這個寬度更窄，改成左右捲動（px，預設 560） */
+	minWidth?: number;
+}
+const { name, caption, minWidth = 560 } = Astro.props;
+const all = import.meta.glob<string>('../diagrams/*.svg', { query: '?raw', import: 'default', eager: true });
+const svg = all[`../diagrams/${name}.svg`];
+if (!svg) throw new Error(`找不到圖解：src/diagrams/${name}.svg`);
+---
+
+<figure class="diagram not-content">
+	<div class="diagram-scroll">
+		<div class="diagram-svg" style={minWidth ? `min-width:${minWidth}px` : undefined} set:html={svg} />
+	</div>
+	{caption && <figcaption set:html={caption} />}
+</figure>
+
+<style>
+	.diagram {
+		margin: 1.5rem 0;
+		/* 圖解本身是淺色設計，深色模式也維持白底卡片才看得清楚 */
+		background: #fff;
+		color: #1f2328;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 14px;
+		padding: 14px;
+	}
+	.diagram-scroll {
+		overflow-x: auto;
+	}
+	.diagram-svg :global(svg) {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+	.diagram-svg :global(svg text) {
+		font-family: -apple-system, 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+	}
+	.diagram-svg :global(a.stn:hover text),
+	.diagram-svg :global(a.stn:focus-visible text) {
+		text-decoration: underline;
+	}
+	figcaption {
+		text-align: center;
+		color: #5b6470;
+		font-size: 0.875rem;
+		margin-top: 6px;
+	}
+	figcaption :global(code) {
+		background: #efe8dc;
+		padding: 1px 6px;
+		border-radius: 5px;
+	}
+</style>

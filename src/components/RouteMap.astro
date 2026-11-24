@@ -1,0 +1,144 @@
+---
+/**
+ * AI Agent 路線圖：直式捷運路線，每一站連到該站頁面。
+ * 某一站的「動手做」全部打勾後，那一站的圓點會填滿。
+ */
+const COLORS = { base: '#0E8A8C', core: '#3F4FC0', adv: '#C98A12', end: '#B8325A' } as const;
+const stations = [
+	{ n: 0, title: '起點：AI Agent 到底是什麼', week: '第 1 週', slug: 'what-is-agent', line: 'base', items: 3 },
+	{ n: 1, title: 'LLM 與 Prompt', week: '第 1 週', slug: 'llm-prompt', line: 'base', items: 4 },
+	{ n: 2, title: '用程式叫 AI', week: '第 2 週', slug: 'api', line: 'base', items: 4 },
+	{ n: 3, title: 'Tool Use：給 AI 一雙手', week: '第 3 週', slug: 'tool-use', line: 'core', items: 4 },
+	{ n: 4, title: 'Agent Loop：第一個 Agent', week: '第 4 週', slug: 'agent-loop', line: 'core', items: 5 },
+	{ n: 5, title: 'MCP：AI 世界的 USB-C', week: '第 5 週', slug: 'mcp', line: 'core', items: 4 },
+	{ n: 6, title: 'Skills：Agent 的 SOP 手冊', week: '第 6 週', slug: 'skills', line: 'core', items: 4 },
+	{ n: 7, title: 'RAG、記憶與 Context', week: '第 7 週', slug: 'rag-memory', line: 'adv', items: 3 },
+	{ n: 8, title: '評估與安全', week: '第 7 週', slug: 'eval-safety', line: 'adv', items: 4 },
+	{ n: 9, title: '畢業專案：Campaign 分析 Agent', week: '第 8 週', slug: 'capstone', line: 'end', items: 7 },
+] as const;
+---
+
+<div class="route not-content">
+	<ol>
+		{
+			stations.map((s) => (
+				<li style={`--c:${COLORS[s.line]}`} data-station={`agent-s${s.n}`} data-items={s.items}>
+					<a href={`${s.slug}/`}>
+						<span class="dot">{s.n}</span>
+						<span class="title">{s.title}</span>
+						<span class="week">{s.week}</span>
+					</a>
+				</li>
+			))
+		}
+	</ol>
+	<p class="legend">
+		<span><i style={`background:${COLORS.base}`}></i>基礎線：理解 AI、會用程式呼叫</span>
+		<span><i style={`background:${COLORS.core}`}></i>核心線：Agent 的手、迴圈、插座、SOP</span>
+		<span><i style={`background:${COLORS.adv}`}></i>進階線：讓它可靠、不出事</span>
+		<span><i style={`background:${COLORS.end}`}></i>終點：作品集專案</span>
+	</p>
+</div>
+
+<script>
+	document.querySelectorAll<HTMLElement>('.route li[data-station]').forEach((li) => {
+		let s: Record<string, boolean> = {};
+		try {
+			s = JSON.parse(localStorage.getItem('ln:checklist:' + li.dataset.station) || '{}');
+		} catch {}
+		const done = Object.values(s).filter(Boolean).length;
+		if (done >= Number(li.dataset.items)) li.classList.add('done');
+	});
+</script>
+
+<style>
+	.route {
+		margin: 1.5rem 0;
+		padding: 18px 20px 8px;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 14px;
+	}
+	ol {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	li {
+		position: relative;
+		padding-left: 52px;
+	}
+	/* 路線：每一站往下畫一段該線的顏色 */
+	li::before {
+		content: '';
+		position: absolute;
+		left: 15px;
+		top: 0;
+		bottom: 0;
+		width: 6px;
+		background: var(--c);
+	}
+	li:first-child::before {
+		top: 22px;
+	}
+	li:last-child::before {
+		bottom: calc(100% - 22px);
+	}
+	a {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 2px 12px;
+		padding: 9px 0;
+		text-decoration: none;
+		color: var(--sl-color-white);
+	}
+	a:hover .title,
+	a:focus-visible .title {
+		color: var(--c);
+		text-decoration: underline;
+	}
+	.dot {
+		position: absolute;
+		left: 0;
+		top: 5px;
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		border: 6px solid var(--c);
+		background: var(--sl-color-bg);
+		color: var(--c);
+		display: grid;
+		place-items: center;
+		font-size: 0.8rem;
+		font-weight: 800;
+		line-height: 1;
+	}
+	li.done .dot {
+		background: var(--c);
+		color: #fff;
+	}
+	.title {
+		font-weight: 600;
+		line-height: 1.5;
+	}
+	.week {
+		font-size: 0.85rem;
+		color: var(--sl-color-gray-3);
+	}
+	.legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 18px;
+		margin: 12px 0 6px;
+		font-size: 0.8rem;
+		color: var(--sl-color-gray-3);
+	}
+	.legend i {
+		display: inline-block;
+		width: 18px;
+		height: 5px;
+		border-radius: 3px;
+		vertical-align: middle;
+		margin-right: 6px;
+	}
+</style>

@@ -1,0 +1,566 @@
+---
+title: Git & GitHub 從零開始
+description: 給完全新手的 Git 與 GitHub 圖解教學：存檔點、三個區域、分支、push/pull、Pull Request、救命指南與作品集。
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import Quiz from '../../../components/Quiz.astro';
+import Checklist from '../../../components/Checklist.astro';
+import Diagram from '../../../components/Diagram.astro';
+
+給完全新手的圖解教學。每一節都有圖、有能直接複製的指令，也有可以動手做的練習。
+
+## 0. 怎麼學最有效？
+
+建議用 7 天，每天 30–60 分鐘就好。
+
+:::tip[最重要的一個建議]
+Git 光看是學不會的，要**自己打指令**才記得住。這份教學每一段都請你打開「終端機 Terminal」照著做一遍。指令打錯了沒關係，第 10 節教你怎麼救回來，大部分錯誤都能復原。
+:::
+
+| 天 | 主題 | 範圍與目標 |
+|---|---|---|
+| Day 1 | 搞懂概念 + 安裝 | 第 1–2 節。先讀懂「存檔點」的比喻，裝好 Git、設定名字和 email |
+| Day 2 | 本機基本循環 | 第 3–4 節。熟練 add → commit，做 5 次以上 commit |
+| Day 3 | 看歷史、時光機 | 第 5 節。log / diff / 回到舊版本 |
+| Day 4 | 分支 | 第 6 節。建分支、合併，刻意製造一次衝突再解掉 |
+| Day 5 | GitHub 上線 | 第 7–8 節。開帳號、登入，push 你的第一個 repo |
+| Day 6 | 協作流程 | 第 9 節。自己對自己開一次 Pull Request |
+| Day 7 | 做作品集 | 第 11 節。把一個自己的 SQL/Python 專案放上 GitHub，寫好 README |
+
+<Checklist
+	id="git-basics"
+	title="✅ 進度清單"
+	items={[
+		'打開終端機，確認 <code>git --version</code> 有結果',
+		'設定 <code>user.name</code> 和 <code>user.email</code>',
+		'建立 git-practice 並 <code>git init</code>',
+		'完成第一個 commit',
+		'用 <code>git log --oneline</code> 看到至少 5 個 commit',
+		'用 <code>git diff</code> 看懂改動內容',
+		'建立分支並合併回 main',
+		'故意製造一次衝突並解決',
+		'註冊 GitHub 並用 <code>gh auth login</code> 登入',
+		'第一次 <code>git push</code> 成功',
+		'加上 .gitignore',
+		'自己開一次 Pull Request 並 merge',
+		'在 learngitbranching.js.org 完成「主要」的前 4 關',
+		'把一個自己的專案放上 GitHub，附上完整的 README',
+	]}
+/>
+
+## 1. Git 和 GitHub 到底是什麼？
+
+先用一個比喻搞懂，後面就簡單了。你一定看過這種資料夾：
+
+```text
+報告_v1.docx
+報告_v2.docx
+報告_v2_修改.docx
+報告_最終版.docx
+報告_最終版_真的最終.docx   ← 😵 到底哪個才是對的？改了什麼？
+```
+
+**Git 就是用來解決這個問題的。** 它會幫你把專案的每個版本記下來，每存一次就像遊戲裡的**存檔點**。你可以隨時回到之前任何一個存檔，也看得到每次改了哪幾行、是誰改的、為什麼要改。
+
+<Diagram name="git-timeline" caption="Git 的歷史紀錄就是一條「存檔點」時間線" />
+
+<CardGrid>
+	<Card title="🖥️ Git">
+		一個**裝在你電腦上的軟體**，負責記錄版本。不用網路也能用。
+
+		比喻：**相機**，負責拍下每個時刻。
+	</Card>
+	<Card title="☁️ GitHub">
+		一個**網站**，幫你把 Git 紀錄存到雲端，方便分享和協作。
+
+		比喻：**雲端相簿**（像 Google Photos），可以備份照片、分享給別人。
+	</Card>
+</CardGrid>
+
+:::note[為什麼要學？]
+在數據分析、工程相關的工作裡，SQL、Python、dbt 這些程式碼幾乎都放在 Git 上管理。面試官也常常會直接點開你的 GitHub 看作品。學會 Git，你可以：① 有一個看得到的作品集 ② 進公司就能跟上團隊流程 ③ 程式改壞了也不怕，隨時能退回去。
+:::
+
+### 先記 6 個單字
+
+| 名詞 | 白話意思 |
+|---|---|
+| **repository**（repo） | 被 Git 管理的專案資料夾 |
+| **commit** | 一個存檔點，附上一句說明「這次改了什麼」 |
+| **branch**（分支） | 一條平行的時間線，可以在上面試新東西，不影響主線 |
+| **merge**（合併） | 把分支上的改動合回主線 |
+| **remote**（遠端） | 放在雲端（GitHub）的那份 repo |
+| **push / pull** | push＝上傳到 GitHub；pull＝從 GitHub 下載最新版 |
+
+## 2. 安裝與設定
+
+做一次就好，大約 10 分鐘。
+
+### 步驟 1：打開終端機
+
+Mac：按 `⌘ Command + 空白鍵`，輸入 `Terminal`，按 Enter。會出現一個黑色或白色的視窗，這就是「終端機」，等一下所有指令都打在這裡。
+
+:::note[用 Windows？]
+到 `git-scm.com` 下載 Git for Windows 安裝，裝完會多一個叫 **Git Bash** 的程式。之後本教學的指令都打在 Git Bash 裡，用法和 Mac 的終端機幾乎一樣。
+:::
+
+### 步驟 2：確認有沒有 Git
+
+```bash
+git --version
+```
+
+如果出現像 `git version 2.4x.x` 的字，就是已經裝好了。Mac 如果跳出視窗問你要不要安裝「命令列開發者工具」，按**安裝**，等它跑完再輸入一次上面的指令。
+
+### 步驟 3：告訴 Git 你是誰
+
+每個 commit 都會記錄作者，所以要先設定名字和 email。
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+git config --global init.defaultBranch main   # 主線分支命名為 main（現在的標準）
+```
+
+:::caution[email 會公開]
+repo 公開之後，任何人都看得到 commit 上的 email。建議到 GitHub 的 **Settings → Emails** 勾選 **Keep my email addresses private**，改用頁面上那組 `數字+帳號@users.noreply.github.com` 的 email。用這組 email 一樣會算進你的 GitHub 貢獻紀錄。
+:::
+
+檢查設定：
+
+```bash
+git config --list
+```
+
+### 步驟 4（建議）：認識 5 個終端機基本指令
+
+| 指令 | 作用 | 比喻 |
+|---|---|---|
+| `pwd` | 顯示我現在在哪個資料夾 | 「我在哪？」 |
+| `ls` | 列出這個資料夾裡有什麼 | 「這裡有什麼？」 |
+| `cd 資料夾名` | 進入某個資料夾 | 雙擊打開資料夾 |
+| `cd ..` | 回到上一層 | 按「上一頁」 |
+| `mkdir 名字` | 建立新資料夾 | 右鍵 → 新增資料夾 |
+
+:::tip[小技巧]
+打指令時按 `Tab` 會自動補完檔名，按 `↑` 可以叫出上一個指令。
+:::
+
+## 3. 最核心的概念：三個區域
+
+這一節讀懂了，Git 就學會一半了。把 commit 想成**寄包裹**：
+
+1. **工作區**：你的書桌，東西隨便你放、隨便你改。
+2. **暫存區（Staging）**：紙箱。你挑出這次要寄的東西放進去，不一定要全部放。
+3. **儲存庫（Repository）**：封箱寄出，變成一個正式紀錄（commit），之後隨時查得到。
+
+<Diagram name="git-three-areas" caption="改檔案 → <code>git add</code> 放進紙箱 → <code>git commit</code> 封箱存檔" />
+
+:::note[為什麼要多一個「暫存區」？]
+假設你今天同時改了 SQL 查詢，又順手改了 README 的錯字。這是兩件不相關的事，分成兩個 commit 會比較清楚。有暫存區，你就可以先只放 SQL 進去存一次，再放 README 存一次。
+:::
+
+隨時可以用這個指令看「現在每個檔案在哪個區域」，**這會是你最常用的指令**：
+
+```bash
+git status
+```
+
+## 4. 動手做：你的第一個 commit
+
+跟著一行一行打，每打完一行就看一下輸出。
+
+### ① 建立專案資料夾，讓 Git 開始管理它
+
+```bash
+# 在桌面建立一個練習資料夾並進入
+cd ~/Desktop
+mkdir git-practice
+cd git-practice
+
+# 讓 Git 開始管理這個資料夾（只要做一次）
+git init
+```
+
+你會看到 `Initialized empty Git repository...`。Git 在資料夾裡建了一個隱藏的 `.git` 資料夾，所有存檔紀錄都放在裡面。**不要手動去動它。**
+
+### ② 建立一個檔案
+
+```bash
+echo "# 我的第一個 Git 專案" > README.md
+git status
+```
+
+輸出會出現紅字 `Untracked files: README.md`，意思是：Git 看到這個新檔案了，但還沒開始追蹤它（它還在書桌上）。
+
+### ③ 放進暫存區
+
+```bash
+git add README.md
+git status
+```
+
+現在變成綠字 `Changes to be committed`，表示已經放進紙箱了。
+
+:::tip[小技巧]
+`git add .`（後面是一個點）會把所有改過的檔案一次放進去，很常用。
+:::
+
+### ④ 存檔（commit）
+
+```bash
+git commit -m "新增 README"
+```
+
+`-m` 後面接的是這次存檔的說明。🎉 恭喜，你的第一個 commit 完成了！
+
+### ⑤ 再做一次，練出手感
+
+```bash
+echo "這個專案用來練習 Git" >> README.md
+git status              # 會顯示 modified: README.md
+git diff                # 看改了什麼（綠色 + 是新增的行），按 q 離開
+git add .
+git commit -m "README 加上專案說明"
+```
+
+### commit 說明怎麼寫比較好？
+
+| ❌ 不好 | ✅ 好 |
+|---|---|
+| update | 新增 7 日留存率的 SQL 查詢 |
+| fix | 修正訂單金額重複計算的 bug |
+| asdf | README 補上資料來源說明 |
+
+原則就是：**讓三個月後的你一眼就看懂這次改了什麼。**
+
+:::caution[不小心進到一個奇怪的編輯畫面？]
+如果打 `git commit` 時忘了加 `-m`，會跳進一個叫 Vim 的編輯器，很多人卡在這裡出不來。解法：按 `Esc`，輸入 `:q!`，按 Enter 就能離開，然後重新打一次加上 `-m "說明"` 的指令。
+:::
+
+## 5. 看歷史 & 時光機
+
+```bash
+git log --oneline
+```
+
+```text
+b7c9e21 README 加上專案說明
+a1f3d08 新增 README
+```
+
+前面那串亂碼（例如 `b7c9e21`）是每個 commit 的 ID，就像存檔點的編號，之後要指定某個 commit 時會用到。
+
+| 我想… | 指令 |
+|---|---|
+| 看所有歷史（精簡版） | `git log --oneline` |
+| 看歷史 + 分支的圖 | `git log --oneline --graph --all` |
+| 看還沒 add 的改動 | `git diff` |
+| 看已經 add、還沒 commit 的改動 | `git diff --staged` |
+| 看某次 commit 改了什麼 | `git show a1f3d08` |
+| 把檔案改壞了，想恢復成上次 commit 的樣子 | `git restore README.md` |
+| 暫時回去看舊版本 | `git switch --detach a1f3d08`（看完後用 `git switch main` 回來） |
+
+:::tip[小提醒]
+`git log` 或 `git diff` 的內容太長時，畫面會停住讓你捲動。按 `q` 就能離開。
+:::
+
+## 6. 分支（Branch）：平行宇宙
+
+想試一個新做法，又怕把原本能跑的東西改壞？那就開一個分支。
+
+<Diagram name="git-branch" caption="在分支上隨便實驗，成功了就合併回 main；失敗了就把分支刪掉，main 完全不受影響" />
+
+### 動手做
+
+```bash
+git branch                      # 列出所有分支，* 標的是你現在所在的分支
+git switch -c feature-chart     # 建立新分支並切換過去
+
+echo "圖表功能" > chart.py
+git add .
+git commit -m "新增圖表功能"
+
+git switch main                 # 切回主線，chart.py 不見了（因為它只存在於分支上）
+ls
+
+git merge feature-chart         # 把分支合併進 main
+ls                              # chart.py 出現了！
+
+git branch -d feature-chart     # 合併完就可以刪掉分支
+```
+
+### 💥 衝突（Conflict）：不用怕
+
+如果兩條分支**改到同一個檔案的同一行**，Git 不知道該留哪一個，就會請你自己決定。打開那個檔案，會看到像這樣的內容：
+
+```text
+<<<<<<< HEAD
+SELECT * FROM users WHERE country = 'TW';      ← main 的版本
+=======
+SELECT * FROM users WHERE country = 'SG';      ← 分支的版本
+>>>>>>> feature-x
+```
+
+**解決步驟：**
+
+1. 改成你要的最終內容，並**把 `<<<<<<<`、`=======`、`>>>>>>>` 這三行標記刪掉**
+2. `git add 檔名`
+3. `git commit -m "解決衝突"`
+
+用 VS Code 打開衝突的檔案，會直接出現「Accept Current / Accept Incoming / Accept Both」按鈕，點一下就好，比手動改簡單很多。
+
+<details>
+<summary>🏋️ 練習：故意製造一次衝突</summary>
+
+```bash
+git switch -c test-conflict
+echo "分支的內容" > README.md
+git commit -am "分支改 README"
+git switch main
+echo "main 的內容" > README.md
+git commit -am "main 改 README"
+git merge test-conflict        # 💥 CONFLICT！照上面的步驟解掉它
+```
+
+（`-am` 是 add 加 commit 一起做，只對 Git 已經在追蹤的檔案有效。）
+
+</details>
+
+## 7. GitHub：把專案放上雲端
+
+<Diagram name="git-github-remote" caption="GitHub 就像中央倉庫，每個人都從這裡拿最新版，改完再送回來" />
+
+### 步驟 1：註冊帳號
+
+到 `github.com` 註冊。**使用者名稱會出現在你的作品集網址裡**（例如 `github.com/your-name`），而且會寫在履歷上，建議用專業一點的名字。
+
+### 步驟 2：讓電腦登入 GitHub（最簡單的方法）
+
+GitHub 已經不能直接用密碼 push 了。對新手來說，最簡單的是裝官方的 **GitHub CLI**，它會用瀏覽器幫你登入：
+
+```bash
+# Mac：先裝 Homebrew（Mac 的軟體安裝工具），已經裝過可以跳過
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 安裝 GitHub CLI 並登入
+brew install gh
+# Windows 改用：winget install --id GitHub.cli
+gh auth login
+# 選擇：GitHub.com → HTTPS → Yes → Login with a web browser
+# 畫面會給你一組代碼，貼到瀏覽器裡就完成了
+```
+
+:::caution[裝完 Homebrew 後]
+安裝結束時畫面最下面會出現 **Next steps**，裡面有兩三行指令，一定要照著複製貼上執行，不然還是會出現 `brew: command not found`。另外，如果你同時有公司和個人的 GitHub 帳號，按下登入前先確認瀏覽器右上角登入的是哪一個。
+:::
+
+:::note[不想打指令？]
+也可以裝 **GitHub Desktop**（圖形介面的 App），或在 **VS Code** 左側的「原始碼控制」面板登入。不過還是建議先用指令學會，因為懂指令之後，圖形介面在做什麼你也會看得懂，反過來就不一定了。
+:::
+
+## 8. push、pull、clone
+
+### 情況 A：把電腦上已經有的專案放上 GitHub
+
+1. 在 GitHub 右上角按 **+ → New repository**
+2. 名字填 `git-practice`，選 Public，**其他選項都不要勾**（因為你本機已經有 README 了）
+3. 按 Create，然後回到終端機：
+
+```bash
+cd ~/Desktop/git-practice
+git remote add origin https://github.com/你的帳號/git-practice.git   # 告訴 Git 雲端倉庫在哪
+git push -u origin main                                               # 第一次上傳
+```
+
+重新整理 GitHub 網頁，你的檔案就在上面了 🎉。之後每次只要打 `git push` 就好（`-u` 只有第一次需要加）。
+
+:::tip[懶人一行搞定]
+裝好 gh 之後，在專案資料夾裡打 `gh repo create --source=. --public --push`，它會自動幫你建立 GitHub repo、設定 origin 並上傳。
+:::
+
+### 情況 B：把 GitHub 上的專案下載到電腦
+
+```bash
+git clone https://github.com/某人/某專案.git
+cd 某專案
+```
+
+### 每天的標準流程 🔁
+
+<Diagram name="git-daily-flow" />
+
+### 🙈 .gitignore：不要上傳的東西
+
+在專案根目錄建立一個叫 `.gitignore` 的檔案，把不想被 Git 追蹤的檔案寫進去：
+
+```text
+# .gitignore 範例（資料分析專案）
+.DS_Store
+.env
+__pycache__/
+.ipynb_checkpoints/
+data/raw/
+*.csv
+```
+
+`.DS_Store` 是 Mac 自動產生的垃圾檔；`.env` 通常放密碼和 API key，**絕對不能上傳**；`data/raw/` 是很大或有機密的原始資料。
+
+:::danger[非常重要：資安]
+**絕對不要把公司資料、資料庫密碼、API key、客戶資料上傳到公開的 GitHub。** 就算之後刪掉，Git 歷史裡還是找得到。作品集請一律用公開資料集（Kaggle、政府開放資料等）。公司的營運、交易或客戶數據，就算拿掉名字也不要放上去。
+:::
+
+## 9. Pull Request：團隊協作的方式
+
+進公司之後，大部分時間都在用這個流程。
+
+<Diagram name="git-pr-flow" />
+
+### 自己練一次（一個人也能練）
+
+```bash
+cd ~/Desktop/git-practice
+git switch -c add-analysis
+echo "SELECT COUNT(*) FROM users;" > analysis.sql
+git add .
+git commit -m "新增使用者數量查詢"
+git push -u origin add-analysis
+```
+
+1. 打開 GitHub 的 repo 頁面，上方會出現黃色提示框 **Compare & pull request**，點下去
+2. 寫標題和說明（改了什麼、為什麼改），按 **Create pull request**
+3. 點 **Files changed** 分頁，看看 review 介面長什麼樣子，也可以試著在某一行留言
+4. 按 **Merge pull request** → Confirm
+5. 回到終端機，把最新的 main 拉回來：
+
+```bash
+git switch main
+git pull
+git branch -d add-analysis
+```
+
+<details>
+<summary>📚 進階名詞：fork 是什麼？</summary>
+
+Fork 是把**別人的** repo 複製一份到**你的**帳號下。想參與開源專案、但又沒有權限直接改的時候會用到：先 fork → 在自己那份上改 → 再對原專案開 PR。在公司裡通常大家都有權限，所以比較少用。
+
+</details>
+
+## 10. 救命指南：搞砸了怎麼辦？
+
+先深呼吸。只要 commit 過的東西，幾乎都救得回來。
+
+| 😱 狀況 | 💊 解法 |
+|---|---|
+| commit 說明打錯了（還沒 push） | `git commit --amend -m "正確的說明"` |
+| commit 時漏了一個檔案（還沒 push） | `git add 漏掉的檔案` → `git commit --amend --no-edit` |
+| 不小心 add 了不想要的檔案 | `git restore --staged 檔名`（從紙箱拿出來，檔案內容不會被改） |
+| 檔案改壞了，想恢復成上次 commit 的樣子 | `git restore 檔名` ⚠️ 還沒存檔的改動會消失 |
+| 想取消最後一次 commit，但保留改過的內容 | `git reset --soft HEAD~1` |
+| 已經 push 了，想撤銷某個 commit | `git revert commitID`（會新增一個「反向」的 commit，安全、不改寫歷史） |
+| push 被拒絕：`rejected ... fetch first` | 代表雲端有你沒有的新東西。先 `git pull`，再 `git push` |
+| 改到一半要切去別的分支 | `git stash`（先收起來）→ 切過去做事 → 切回來 → `git stash pop` |
+| 真的搞到一團亂 | `git reflog` 會列出你做過的每一個動作，可以從裡面找回之前的狀態 |
+| 不小心把密碼 push 上去了 | **馬上去把那組密碼／key 換掉**，這比從歷史裡刪掉更重要 |
+
+:::caution[新手先不要用的指令]
+`git push --force` 和 `git reset --hard` 會直接刪掉紀錄。等你更熟了、也清楚自己在做什麼，再考慮使用。
+:::
+
+## 11. 畢業專題：做一個作品集 repo
+
+學 Git 最好的方法就是拿來做一件真的有用的事。如果你在找數據分析（DA/BA）相關的工作，這件事剛好也能直接幫到你。
+
+### 建議的資料夾結構
+
+```text
+ecommerce-retention-analysis/
+├── README.md              ← 最重要！面試官第一眼就會看到這個
+├── .gitignore
+├── data/
+│   └── README.md          ← 說明資料來源（例如 Kaggle 連結），不要放大檔案
+├── sql/
+│   ├── 01_cleaning.sql
+│   └── 02_cohort_retention.sql
+├── notebooks/
+│   └── analysis.ipynb
+└── images/
+    └── retention_chart.png
+```
+
+### README 範本
+
+```markdown
+# 電商用戶留存分析
+
+## 📌 商業問題
+新用戶在首購之後 30 天內的留存率是多少？哪些渠道帶進來的用戶留存最好？
+
+## 🗂️ 資料
+Kaggle – Brazilian E-Commerce（約 10 萬筆訂單）
+
+## 🛠️ 工具
+SQL (PostgreSQL)、Python (pandas, matplotlib)
+
+## 🔍 主要發現
+1. ……
+2. ……
+
+![留存曲線](images/retention_chart.png)
+
+## 💡 建議
+……
+```
+
+:::tip[加分技巧]
+1. 在 GitHub 建立一個跟帳號**同名**的 repo（例如 `your-name/your-name`），裡面的 README 會直接顯示在你的個人首頁，可以當成自我介紹。
+2. 把最好的 3 個專案 **Pin**（釘選）在個人頁上。
+3. 規律地 commit，讓你個人頁上的綠色格子圖慢慢變多。
+4. 履歷上直接放 GitHub 連結。
+:::
+
+## 12. 速查表
+
+建議截圖或印出來。
+
+| 類別 | 指令 | 作用 |
+|---|---|---|
+| 開始 | `git init` | 讓目前的資料夾變成 repo |
+| 開始 | `git clone 網址` | 下載 GitHub 上的 repo |
+| 日常 | `git status` | 看現在的狀態（最常用！） |
+| 日常 | `git add .` | 把所有改動放進暫存區 |
+| 日常 | `git commit -m "說明"` | 存檔 |
+| 日常 | `git diff` | 看改了什麼 |
+| 歷史 | `git log --oneline --graph` | 看歷史紀錄 |
+| 歷史 | `git restore 檔名` | 還原檔案 |
+| 分支 | `git branch` | 列出分支 |
+| 分支 | `git switch -c 名字` | 建立並切換到新分支 |
+| 分支 | `git switch main` | 切回 main |
+| 分支 | `git merge 名字` | 把某個分支合併進目前的分支 |
+| 遠端 | `git push` | 上傳 |
+| 遠端 | `git pull` | 下載最新版並合併 |
+| 遠端 | `git remote -v` | 看連到哪個 GitHub repo |
+
+## 13. 小測驗：檢查一下自己懂了沒
+
+<Quiz
+	id="git-basics"
+	questions={[
+		{ q: 'Git 和 GitHub 的關係是？', options: ['它們是同一個東西', 'Git 是電腦上的版本控制軟體，GitHub 是放 Git 專案的網站', 'GitHub 是 Git 的新版本'], answer: 1, explain: 'Git 是相機，GitHub 是雲端相簿。不用 GitHub 也能用 Git。' },
+		{ q: '改完檔案後，要存成一個 commit，正確順序是？', options: ['git commit → git add', 'git push → git commit', 'git add → git commit'], answer: 2, explain: '先把改動放進紙箱（add），再封箱（commit）。' },
+		{ q: '你想看現在哪些檔案被改過、哪些已經 add 了，用哪個指令？', options: ['git status', 'git log', 'git push'], answer: 0, explain: 'git status 是最常用的指令，不知道現在是什麼狀況時就先打它。' },
+		{ q: '想試一個新的分析方法，但不想影響原本能跑的程式，應該？', options: ['複製整個資料夾改名', '開一個新分支', '直接在 main 上改'], answer: 1, explain: '分支就是為了這種情況存在的，成功了就 merge，失敗了就刪掉。' },
+		{ q: 'git push 出現 rejected，提示 fetch first，代表？', options: ['GitHub 壞掉了', '雲端有你本機沒有的新 commit，要先 git pull', '你的密碼錯了'], answer: 1, explain: '先 pull 把別人的改動拉下來（有衝突就解掉），再 push。' },
+		{ q: '以下哪個「不應該」放進公開的 GitHub repo？', options: ['README.md', '分析用的 SQL 檔', '含有資料庫密碼的 .env 檔'], answer: 2, explain: '密碼和 key 要寫進 .gitignore。萬一不小心上傳了，要馬上把密碼換掉。' },
+		{ q: 'Pull Request 的用途是？', options: ['從 GitHub 下載程式碼', '請別人檢查你在分支上的改動，確認後合併進主線', '刪除分支'], answer: 1, explain: 'PR 是團隊協作的核心流程：開分支 → push → 開 PR → review → merge。' },
+	]}
+/>
+
+## 學完之後可以看的資源
+
+- **[Learn Git Branching](https://learngitbranching.js.org/?locale=zh_TW)**：互動式的視覺化練習，有中文版，**非常推薦**，能幫你把分支的概念練熟。
+- **[GitHub Skills](https://skills.github.com/)**：GitHub 官方的免費實作課程。
+- **[Pro Git](https://git-scm.com/book/zh-tw/v2)**：官方的免費電子書，有繁體中文版，想深入了解時再讀。
+- **VS Code**：內建 Git 功能，可以一邊用指令、一邊對照圖形介面。
+- 讀完這篇，可以接著看[《Git Guides 重點整理》](../guides/)，對照官方的說法複習一次。

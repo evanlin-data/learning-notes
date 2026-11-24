@@ -1,0 +1,88 @@
+---
+title: 畢業專案：Campaign 分析 Agent
+description: 把前面所有零件組起來：MCP server、Skill、評估集，做成能放進履歷、能在面試現場展示的作品並放上 GitHub。
+---
+
+import Checklist from '../../../components/Checklist.astro';
+import Diagram from '../../../components/Diagram.astro';
+
+**第 8 週**，約 8 小時。把前面所有零件組起來，放上 GitHub。
+
+:::note[本站目標]
+完成一個能放進履歷、能在面試現場展示的作品：用自然語言提問，Agent 透過你寫的 MCP server 查詢資料庫、依照 Skill 的口徑計算、輸出報告，並附上評估結果。
+:::
+
+<Diagram name="agent-capstone" />
+
+## 專案資料夾
+
+```text title="campaign-insight-agent/"
+campaign-insight-agent/
+├── README.md               # 最重要：專案說明、架構圖、示範截圖、評估結果
+├── CLAUDE.md
+├── SECURITY.md
+├── .gitignore              # 含 .env、.venv/、logs/
+├── requirements.txt
+├── data/make_demo_db.py
+├── db_tools.py
+├── campaign_server.py      # MCP server
+├── agent.py                # 獨立執行的 Agent（第 4 站加強版）
+├── skills/campaign-report/
+│   ├── SKILL.md
+│   ├── metrics.md
+│   └── template.md
+└── evals/
+    ├── cases.py
+    └── run_eval.py
+```
+
+## 完成步驟
+
+1. **整理**：把前面各站的程式搬進新資料夾，統一命名。
+2. **強化資料**：在 `make_demo_db.py` 加一張 `users` 表（註冊日期、地區、會員等級），讓問題可以更有分析深度。
+3. **強化工具**：MCP server 至少有 `get_schema`、`run_sql`、`campaign_summary` 三個工具和一個口徑 resource。
+4. **完成 Skill**：包含分析步驟、口徑、報告範本、常見錯誤。
+5. **評估**：至少 15 題，跑出通過率，把結果表格放進 README。
+6. **錄示範**：錄一段 1 分鐘的螢幕錄影或 GIF，展示從提問到報告的完整過程。
+7. **上架**：在你自己的電腦上，用個人 GitHub 帳號建 public repo 並 push；push 前用 `git status` 檢查 `.env` 沒有被加入。
+
+## README 該寫什麼
+
+面試官通常只花一兩分鐘看 README，所以把重點放前面：一句話說明這個 Agent 解決什麼問題；一張架構圖（可以參考上面那張）；示範 GIF；怎麼安裝與執行；評估方法與結果；你做了哪些安全設計；以及「我學到什麼、下一步想做什麼」。
+
+## 放進履歷
+
+可以在 Projects 加一條，依你實際做到的內容調整：
+
+```text
+Campaign Insight Agent (Python, Claude API, MCP, SQLite)
+- Built an LLM agent that answers natural-language questions on marketing
+  campaign performance by generating and executing read-only SQL through
+  a custom MCP server
+- Encoded metric definitions and reporting workflow as a reusable Skill,
+  and built an evaluation suite that checks answers against SQL ground truth
+- Applied least-privilege tool design, step limits and synthetic data to
+  keep the agent safe and reproducible
+```
+
+面試時最有說服力的不是「我用了 MCP」，而是你能講出取捨：為什麼工具只給唯讀？為什麼週報用 workflow 而探索用 agent？評估集一開始哪幾題 FAIL、你怎麼修好的？
+
+## 做完之後可以延伸
+
+- 用 Streamlit 做一個簡單網頁介面，讓不會寫程式的人也能用
+- 改用 Claude Agent SDK 重寫 `agent.py`，比較和手寫版的差異
+- 做成排程任務：每週一自動產出週報（這時候就是 workflow 了）
+- 加一個「異常偵測」工具：營收突然掉 30% 時，讓 Agent 自動往下鑽探原因
+
+<Checklist
+	id="agent-s9"
+	items={[
+		'建立 <code>campaign-insight-agent</code> 資料夾並整理好結構',
+		'MCP server 有三個工具和一個 resource，並通過 Inspector 測試',
+		'完成 Skill，在 Claude Code 裡跑出一份完整報告',
+		'評估集至少 15 題，結果放進 README',
+		'錄好示範 GIF，README 完成',
+		'push 到個人 GitHub，確認 repo 裡沒有 .env 和任何真實資料',
+		'把專案加進履歷 Projects 區，並練習用 2 分鐘講完這個專案',
+	]}
+/>

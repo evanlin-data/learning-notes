@@ -1,0 +1,124 @@
+---
+/**
+ * 可以打勾的進度清單，進度存在讀者自己的瀏覽器（localStorage）。
+ * 用法：<Checklist id="git-basics" items={['第一項', '可以用 <code>行內程式碼</code>']} />
+ * id 必須全站唯一，改了 id 讀者的舊進度就會不見。
+ */
+interface Props {
+	id: string;
+	items: string[];
+	title?: string;
+}
+const { id, items, title = '動手做' } = Astro.props;
+---
+
+<div class="checklist not-content" data-checklist={id}>
+	<div class="cl-head">
+		<strong>{title}</strong>
+		<span class="cl-count">0 / {items.length}</span>
+	</div>
+	<div class="cl-bar" aria-hidden="true"><div></div></div>
+	{
+		items.map((text, i) => (
+			<label>
+				<input type="checkbox" data-i={i} />
+				<span set:html={text} />
+			</label>
+		))
+	}
+</div>
+
+<script>
+	const PREFIX = 'ln:checklist:';
+	document.querySelectorAll<HTMLElement>('[data-checklist]').forEach((box) => {
+		const key = PREFIX + box.dataset.checklist;
+		let state: Record<string, boolean> = {};
+		try {
+			state = JSON.parse(localStorage.getItem(key) || '{}');
+		} catch {}
+		const inputs = [...box.querySelectorAll<HTMLInputElement>('input[type=checkbox]')];
+		const count = box.querySelector('.cl-count')!;
+		const bar = box.querySelector<HTMLElement>('.cl-bar div')!;
+		const refresh = () => {
+			const n = inputs.filter((b) => b.checked).length;
+			count.textContent = `${n} / ${inputs.length}`;
+			bar.style.width = `${(n / inputs.length) * 100}%`;
+			inputs.forEach((b) => b.parentElement!.classList.toggle('done', b.checked));
+		};
+		inputs.forEach((b) => {
+			b.checked = !!state[b.dataset.i!];
+			b.addEventListener('change', () => {
+				state[b.dataset.i!] = b.checked;
+				try {
+					localStorage.setItem(key, JSON.stringify(state));
+				} catch {}
+				refresh();
+			});
+		});
+		refresh();
+	});
+</script>
+
+<style>
+	.checklist {
+		margin: 1.5rem 0;
+		padding: 16px 18px;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 12px;
+		background: var(--sl-color-gray-7, var(--sl-color-gray-6));
+	}
+	.cl-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		color: var(--sl-color-white);
+	}
+	.cl-count {
+		font-size: 0.85rem;
+		color: var(--sl-color-gray-3);
+	}
+	.cl-bar {
+		height: 6px;
+		margin: 8px 0 6px;
+		background: var(--sl-color-gray-5);
+		border-radius: 6px;
+		overflow: hidden;
+	}
+	.cl-bar div {
+		height: 100%;
+		width: 0;
+		background: var(--sl-color-green);
+		transition: width 0.3s;
+	}
+	label {
+		display: flex;
+		gap: 10px;
+		align-items: flex-start;
+		padding: 6px 0;
+		cursor: pointer;
+		line-height: 1.6;
+		color: var(--sl-color-gray-2);
+	}
+	input {
+		flex: none;
+		width: 18px;
+		height: 18px;
+		margin-top: 3px;
+		accent-color: var(--sl-color-green);
+	}
+	label.done span {
+		color: var(--sl-color-gray-3);
+		text-decoration: line-through;
+	}
+	label :global(code) {
+		font-size: 0.875em;
+		background: var(--sl-color-gray-6);
+		padding: 1px 5px;
+		border-radius: 4px;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.cl-bar div {
+			transition: none;
+		}
+	}
+</style>

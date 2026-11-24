@@ -1,0 +1,199 @@
+---
+/**
+ * 選擇題測驗。答過的題目會記在讀者的瀏覽器裡。
+ * 用法：
+ * <Quiz id="git-basics" questions={[
+ *   { q: '題目', options: ['A', 'B', 'C'], answer: 1, explain: '解釋' },
+ * ]} />
+ * answer 從 0 開始算（0 = 第一個選項）。id 必須全站唯一。
+ */
+interface Question {
+	q: string;
+	options: string[];
+	answer: number;
+	explain: string;
+}
+interface Props {
+	id: string;
+	questions: Question[];
+	title?: string;
+}
+const { id, questions, title } = Astro.props;
+const many = questions.length > 1;
+const heading = title ?? (many ? `小測驗（${questions.length} 題）` : '小測驗');
+---
+
+<div class="quiz not-content" data-quiz={id}>
+	<p class="quiz-heading">{heading}</p>
+	{
+		questions.map((x, i) => (
+			<div class="quiz-q" data-answer={x.answer} data-i={i}>
+				<p class="quiz-title">
+					{many && <span>Q{i + 1}. </span>}
+					{x.q}
+				</p>
+				{x.options.map((o, j) => (
+					<button type="button" class="quiz-opt" data-j={j}>
+						{String.fromCharCode(65 + j)}. {o}
+					</button>
+				))}
+				<p class="quiz-exp" hidden>
+					💡 {x.explain}
+				</p>
+			</div>
+		))
+	}
+	<div class="quiz-foot">
+		<span class="quiz-score" aria-live="polite"></span>
+		<button type="button" class="quiz-reset">重新作答</button>
+	</div>
+</div>
+
+<script>
+	const PREFIX = 'ln:quiz:';
+	document.querySelectorAll<HTMLElement>('[data-quiz]').forEach((quiz) => {
+		const key = PREFIX + quiz.dataset.quiz;
+		let saved: Record<string, number> = {};
+		try {
+			saved = JSON.parse(localStorage.getItem(key) || '{}');
+		} catch {}
+		const store = () => {
+			try {
+				localStorage.setItem(key, JSON.stringify(saved));
+			} catch {}
+		};
+		const qs = [...quiz.querySelectorAll<HTMLElement>('.quiz-q')];
+		const score = quiz.querySelector('.quiz-score')!;
+
+		const showScore = () => {
+			const done = qs.filter((q) => q.dataset.picked !== undefined);
+			if (qs.length < 2 || done.length < qs.length) {
+				score.textContent = '';
+				return;
+			}
+			const right = done.filter((q) => q.dataset.picked === q.dataset.answer).length;
+			score.textContent = `你的分數：${right} / ${qs.length}　${right === qs.length ? '🎉 全對！' : '👍 把錯的那幾題對應的段落再看一次'}`;
+		};
+
+		const pick = (q: HTMLElement, j: number) => {
+			if (q.dataset.picked !== undefined) return;
+			q.dataset.picked = String(j);
+			const opts = q.querySelectorAll<HTMLButtonElement>('.quiz-opt');
+			const ans = Number(q.dataset.answer);
+			opts[j].classList.add(j === ans ? 'right' : 'wrong');
+			opts[ans].classList.add('right');
+			opts.forEach((b) => (b.disabled = true));
+			q.querySelector<HTMLElement>('.quiz-exp')!.hidden = false;
+		};
+
+		qs.forEach((q) => {
+			q.querySelectorAll<HTMLButtonElement>('.quiz-opt').forEach((b) =>
+				b.addEventListener('click', () => {
+					const j = Number(b.dataset.j);
+					pick(q, j);
+					saved[q.dataset.i!] = j;
+					store();
+					showScore();
+				}),
+			);
+			const prev = saved[q.dataset.i!];
+			if (typeof prev === 'number') pick(q, prev);
+		});
+		showScore();
+
+		quiz.querySelector('.quiz-reset')!.addEventListener('click', () => {
+			saved = {};
+			store();
+			qs.forEach((q) => {
+				delete q.dataset.picked;
+				q.querySelectorAll<HTMLButtonElement>('.quiz-opt').forEach((b) => {
+					b.classList.remove('right', 'wrong');
+					b.disabled = false;
+				});
+				q.querySelector<HTMLElement>('.quiz-exp')!.hidden = true;
+			});
+			showScore();
+		});
+	});
+</script>
+
+<style>
+	.quiz {
+		margin: 1.5rem 0;
+		padding: 16px 18px;
+		border: 1px dashed var(--sl-color-gray-4);
+		border-radius: 12px;
+	}
+	.quiz-heading {
+		font-weight: 700;
+		color: var(--sl-color-white);
+		margin: 0 0 4px;
+	}
+	.quiz-q + .quiz-q {
+		margin-top: 18px;
+	}
+	.quiz-title {
+		font-weight: 600;
+		color: var(--sl-color-white);
+		margin: 8px 0;
+		line-height: 1.6;
+	}
+	.quiz-opt {
+		display: block;
+		width: 100%;
+		text-align: left;
+		margin: 6px 0;
+		padding: 9px 13px;
+		font: inherit;
+		font-size: 0.95rem;
+		line-height: 1.5;
+		color: var(--sl-color-gray-2);
+		background: var(--sl-color-bg);
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 8px;
+		cursor: pointer;
+	}
+	.quiz-opt:hover:not(:disabled) {
+		border-color: var(--sl-color-accent);
+	}
+	.quiz-opt:disabled {
+		cursor: default;
+	}
+	.quiz-opt.right {
+		background: var(--sl-color-green-low);
+		border-color: var(--sl-color-green);
+		color: var(--sl-color-white);
+	}
+	.quiz-opt.wrong {
+		background: var(--sl-color-red-low);
+		border-color: var(--sl-color-red);
+		color: var(--sl-color-white);
+	}
+	.quiz-exp {
+		margin: 6px 0 0;
+		font-size: 0.925rem;
+		color: var(--sl-color-gray-2);
+		line-height: 1.6;
+	}
+	.quiz-foot {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+		margin-top: 14px;
+	}
+	.quiz-score {
+		font-weight: 700;
+		color: var(--sl-color-white);
+	}
+	.quiz-reset {
+		font: inherit;
+		font-size: 0.85rem;
+		padding: 4px 12px;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 8px;
+		background: transparent;
+		color: var(--sl-color-gray-2);
+		cursor: pointer;
+	}
+</style>

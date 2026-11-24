@@ -1,0 +1,30 @@
+/* 字體：中文優先用系統字 */
+:root {
+	--sl-font: -apple-system, 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
+	--sl-font-mono: 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* 主色：暖紅（深色模式） */
+:root {
+	--sl-color-accent-low: #3d1419;
+	--sl-color-accent: #d1495b;
+	--sl-color-accent-high: #f6c4cb;
+}
+/* 主色：暖紅（淺色模式）＋米白底 */
+:root[data-theme='light'] {
+	--sl-color-accent-low: #fbe3e6;
+	--sl-color-accent: #b8324a;
+	--sl-color-accent-high: #5c1520;
+	--sl-color-bg: #faf7f2;
+	--sl-color-bg-nav: #fffdf9;
+	--sl-color-bg-sidebar: #fffdf9;
+}
+
+/* 中文內文行高大一點比較好讀 */
+.sl-markdown-content {
+	line-height: 1.8;
+}
+.sl-markdown-content table {
+	display: table;
+	width: 100%;
+}

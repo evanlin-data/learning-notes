@@ -1,0 +1,130 @@
+---
+title: MCP：AI 世界的 USB-C
+description: 理解 MCP 解決什麼問題，並把資料庫工具包裝成 MCP server，接上 Claude Code 或 Claude Desktop。
+---
+
+import Quiz from '../../../components/Quiz.astro';
+import Checklist from '../../../components/Checklist.astro';
+import Diagram from '../../../components/Diagram.astro';
+
+**第 5 週**，約 6–7 小時。
+
+:::note[本站目標]
+理解 MCP 解決什麼問題，並把[第 4 站](../agent-loop/)的資料庫工具包裝成一個 MCP server，讓 Claude Desktop、Claude Code 等任何支援 MCP 的 AI 應用都能直接使用。
+:::
+
+## MCP 要解決的問題
+
+在第 3、4 站，你的工具只能給你自己寫的 `s4_agent.py` 用。如果想讓 Claude Desktop 也能用、Claude Code 也能用、同事的 AI 工具也能用，就得每個都重新接一次。
+
+:::tip[比喻]
+以前每支手機的充電孔都不一樣，每個充電器只能配一種手機。USB-C 出現後，只要大家都做成 USB-C，任何充電器都能插任何手機。MCP（Model Context Protocol）就是 AI 工具的 USB-C：工具只要做成 MCP 格式一次，所有支援 MCP 的 AI 應用都能插上去用。
+:::
+
+<Diagram name="agent-mcp" caption="左邊每個應用、右邊每個工具，都只需要「接一次 MCP」，就能兩兩互通。" />
+
+## 三個角色，三種東西
+
+**Host** 是你在用的 AI 應用（Claude Desktop、Claude Code）。**Client** 是 Host 內建的連接器，負責跟 server 溝通，你通常不用管它。**Server** 是提供能力的那一端，也就是你要寫的東西。
+
+一個 MCP server 可以提供三種東西：
+
+- **Tools（工具）**：AI 可以呼叫的動作，例如 `run_sql`。最常用。
+- **Resources（資源）**：可以被讀取的資料，例如一份指標口徑文件。
+- **Prompts（範本）**：預先寫好的提示範本，例如「活動週報範本」。
+
+:::note[實務連結]
+很多團隊已經在用 MCP：例如讓 Claude Code 連上資料倉儲、Jira、Slack，很多都是透過 MCP server。這一站之後，你會從「使用 MCP 的人」變成「能寫 MCP 的人」。
+:::
+
+## 寫一個 MCP Server（比你想像的簡單）
+
+官方 Python SDK 裡的 FastMCP 讓你只要在函式上加一行裝飾器，就變成一個 MCP 工具。函式的 docstring 會自動成為工具的 description，參數型別會自動成為 input_schema。
+
+```bash title="終端機"
+pip install "mcp[cli]"
+```
+
+```python title="campaign_server.py"
+from mcp.server.fastmcp import FastMCP
+import db_tools                                  # 直接重用第 4 站的函式
+
+mcp = FastMCP("campaign-tools")
+
+@mcp.tool()
+def get_schema() -> dict:
+    """取得活動示範資料庫的所有資料表與欄位。寫 SQL 之前一定先呼叫。"""
+    return db_tools.get_schema()
+
+@mcp.tool()
+def run_sql(query: str) -> dict:
+    """在 SQLite 活動資料庫執行唯讀 SELECT 查詢，回傳欄位與最多 50 列。"""
+    return db_tools.run_sql(query)
+
+@mcp.resource("campaign://metric-definitions")
+def metric_definitions() -> str:
+    """活動指標口徑定義"""
+    return "淨營收 = 營收 - 退款\nROI = (淨營收 - 活動成本) / 活動成本"
+
+if __name__ == "__main__":
+    mcp.run()                                       # 預設用 stdio，在本機跑
+```
+
+對照第 4 站：同樣兩個函式，你不用再手寫 `tools = [...]` 那一大段說明書，也不用寫迴圈——迴圈由 Host（例如 Claude Desktop）負責。
+
+## 三種方式測試它
+
+### 方式一：MCP Inspector（最適合除錯）
+
+```bash
+mcp dev campaign_server.py
+```
+
+瀏覽器會打開一個測試介面，你可以直接點選工具、填參數、看回傳結果，不用經過 AI。
+
+### 方式二：接上 Claude Code
+
+```bash
+# 路徑請換成你電腦上的絕對路徑
+claude mcp add campaign-tools -- /完整路徑/ai-agent-lab/.venv/bin/python /完整路徑/ai-agent-lab/campaign_server.py
+```
+
+之後在 Claude Code 裡問「三個活動哪個 ROI 最高？」，它就會呼叫你的工具。
+
+### 方式三：接上 Claude Desktop
+
+在 Claude Desktop 的設定中找到開發者設定，編輯 `claude_desktop_config.json`（Mac 在 `~/Library/Application Support/Claude/`），加入：
+
+```json title="claude_desktop_config.json"
+{
+  "mcpServers": {
+    "campaign-tools": {
+      "command": "/完整路徑/ai-agent-lab/.venv/bin/python",
+      "args": ["/完整路徑/ai-agent-lab/campaign_server.py"]
+    }
+  }
+}
+```
+
+重新啟動 Claude Desktop，就能在對話裡看到你的工具。
+
+:::caution
+MCP server 會在你的電腦上執行程式、存取你的資料。只安裝你信任來源的 server，並且像這裡一樣，盡量只給「最小必要權限」（唯讀、限定資料夾）。
+:::
+
+<Checklist
+	id="agent-s5"
+	items={[
+		'用 <code>mcp dev</code> 打開 Inspector，手動呼叫 <code>get_schema</code> 和 <code>run_sql</code>',
+		'把 server 接上 Claude Code 或 Claude Desktop，用自然語言問一題，確認它真的呼叫了你的工具',
+		'新增一個工具 <code>campaign_summary(campaign_id)</code>，一次回傳該活動的營收、退款、淨營收、活動成本、ROI、參與人數',
+		'（選做）到 <a href="https://modelcontextprotocol.io">modelcontextprotocol.io</a> 看官方 server 清單，裝一個 filesystem server 體驗別人寫的 MCP',
+	]}
+/>
+
+<Quiz
+	id="agent-s5"
+	questions={[
+		{ q: '第 3 站的 tool use 和這站的 MCP，關係是什麼？', options: ['MCP 是把工具「標準化包裝」的方式，讓同一套工具能被很多 AI 應用重複使用；底層 AI 還是透過 tool use 呼叫它', 'MCP 取代了 tool use，有了 MCP 就不需要 tool use', '兩者完全無關'], answer: 0, explain: 'Tool use 是「AI 呼叫工具」這個能力本身；MCP 是「工具該怎麼包裝、怎麼接上」的標準。Host 拿到 MCP 工具清單後，交給模型的仍然是 tool use 的格式。' },
+	]}
+/>

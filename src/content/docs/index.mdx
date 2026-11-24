@@ -1,0 +1,58 @@
+---
+title: 學習筆記
+description: 給新手的繁體中文圖解教學：Git、GitHub、AI Agent。每篇都有圖解、可直接複製的指令、練習清單和小測驗。
+template: splash
+editUrl: false
+lastUpdated: false
+hero:
+  title: 從零開始的圖解教學
+  tagline: 我把學過的東西整理成給新手看的教學，放在這裡持續累積。每篇都有圖解、可以直接複製的指令、練習清單和小測驗，免費、不用註冊。
+  actions:
+    - text: 從 Git 開始
+      link: git/basics/
+      icon: right-arrow
+    - text: AI Agent 學習路線
+      link: ai-agent/
+      variant: minimal
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Git & GitHub
+
+<CardGrid>
+	<LinkCard
+		title="Git & GitHub 從零開始"
+		description="入門・約 7 天・7 題測驗｜用「存檔點」和「寄包裹」的比喻理解 Git，一路做到 push、Pull Request，最後做出自己的作品集 repo。"
+		href="git/basics/"
+	/>
+	<LinkCard
+		title="GitHub Git Guides 重點整理"
+		description="複習・約 2 小時・10 題測驗｜GitHub 官方 Git Guides 10 個指令的中文整理：定義、常用選項、原文重點和常見情境。"
+		href="git/guides/"
+	/>
+</CardGrid>
+
+## AI 與 Agent
+
+<CardGrid>
+	<LinkCard
+		title="AI Agent 學習路線"
+		description="進階・8 週・Python｜從 Prompt、API、Tool Use 到 MCP、Skills、RAG 和評估，親手做出一個會自己寫 SQL 的分析 Agent。"
+		href="ai-agent/"
+	/>
+</CardGrid>
+
+## 建議的閱讀順序
+
+1. 完全沒碰過 Git：先讀[《Git & GitHub 從零開始》](git/basics/)，每段都打開終端機實際做一次。
+2. 做完練習後：用[《Git Guides 重點整理》](git/guides/)對照官方說法複習。
+3. 會用 Git、想學 AI 開發：走[《AI Agent 學習路線》](ai-agent/)，作品會用 Git 推到 GitHub。
+
+## 關於這個網站
+
+這是我的公開學習筆記。我相信把學到的東西整理成別人也看得懂的樣子，是最好的複習方式，所以每學一個新主題，就會在這裡新增一篇。
+
+- 練習清單和測驗的進度只存在你自己的瀏覽器裡，不會上傳。
+- 引用官方文件的地方都有註明出處。發現錯誤或過時的地方，歡迎點每頁下方的「編輯此頁」或到 GitHub 開 issue。
+- 文字內容採用 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.zh-hant) 授權，歡迎分享與改作，請註明出處；程式碼範例採用 MIT 授權。

@@ -1,0 +1,110 @@
+---
+title: 用程式叫 AI：API 入門
+description: 用 Python 呼叫 Claude API，理解每次請求長什麼樣，以及 AI 怎麼「記得」上一句話。
+---
+
+import Quiz from '../../../components/Quiz.astro';
+import Checklist from '../../../components/Checklist.astro';
+import Diagram from '../../../components/Diagram.astro';
+
+**第 2 週**，約 5–6 小時。
+
+:::note[本站目標]
+用 Python 呼叫 Claude API，理解「每次請求長什麼樣」以及「AI 怎麼記得上一句話」。這是從「使用者」變成「開發者」的那一步。
+:::
+
+## 為什麼要用 API，不用聊天介面就好？
+
+聊天介面是給人用的：一次一題、手動複製貼上。API 是給程式用的：可以一次跑 100 個活動、把結果寫進檔案、接到資料庫——而且是 Agent 的必經之路，因為 Agent 本身就是一段呼叫 API 的程式。
+
+<Diagram name="agent-api" />
+
+## 設定環境（一次就好）
+
+1. 到 Claude 開發者後台（console.anthropic.com）註冊、儲值少量額度、建立 API key。**建議設定每月花費上限**，練習階段通常花不了多少。
+2. 在 `ai-agent-lab` 建立虛擬環境並安裝套件。
+3. 把 API key 放進 `.env` 檔，並且**一定**把 `.env` 加進 `.gitignore`。
+
+```bash title="終端機"
+cd ai-agent-lab
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install anthropic python-dotenv
+
+echo 'ANTHROPIC_API_KEY=sk-ant-你的key' > .env
+echo '.env' >> .gitignore
+echo '.venv/' >> .gitignore
+```
+
+:::caution
+API key 就像信用卡密碼。不小心 push 到 GitHub 上，幾分鐘內就可能被盜用。學 Git 時練過的 `.gitignore` 在這裡派上用場：commit 前用 `git status` 確認 `.env` 沒有出現在清單裡。
+:::
+
+## 第一支程式：Hello Claude
+
+```python title="s2_hello.py"
+from dotenv import load_dotenv
+from anthropic import Anthropic
+
+load_dotenv()                       # 從 .env 讀入 ANTHROPIC_API_KEY
+client = Anthropic()                # 自動讀取環境變數裡的 key
+MODEL = "claude-sonnet-5-5"         # 型號會更新，請到官方文件確認最新名稱
+
+resp = client.messages.create(
+    model=MODEL,
+    max_tokens=500,                 # 回答最多多長
+    system="你是電商平台的數據分析助理，用繁體中文回答。",
+    messages=[
+        {"role": "user", "content": "用三句話解釋什麼是 cashback 活動"}
+    ],
+)
+
+print(resp.content[0].text)         # 回答內容
+print(resp.stop_reason)             # end_turn = 正常講完
+print(resp.usage)                   # input_tokens / output_tokens，用來算成本
+```
+
+## 最重要的觀念：AI 其實沒有記憶
+
+每次呼叫 API，模型都是「全新的」，它不記得上一次聊了什麼。聊天介面之所以看起來有記憶，是因為程式每次都把**整段對話歷史**重新送一次。
+
+```python title="s2_chat.py"
+# 開頭的 import、client、MODEL 跟 s2_hello.py 一樣
+
+messages = []                       # 對話歷史，由「你的程式」保管
+
+while True:
+    q = input("你：")
+    if q == "exit":
+        break
+    messages.append({"role": "user", "content": q})
+
+    resp = client.messages.create(
+        model=MODEL, max_tokens=800,
+        system="你是電商平台的數據分析助理，用繁體中文回答。",
+        messages=messages,          # 每次都送「全部」歷史
+    )
+    answer = resp.content[0].text
+    messages.append({"role": "assistant", "content": answer})
+    print("AI：", answer)
+    print(f"  (這輪送出 {resp.usage.input_tokens} tokens)")
+```
+
+跑跑看，你會發現每一輪的 input tokens 越來越多——因為歷史越堆越長。這就是[第 1 站](../llm-prompt/)講的「書桌越來越滿」，也是[第 7 站](../rag-memory/)要處理的問題。
+
+<Checklist
+	id="agent-s2"
+	items={[
+		'完成環境設定，確認 <code>.env</code> 被 Git 忽略',
+		'跑通 <code>s2_hello.py</code>，看懂 <code>stop_reason</code> 和 <code>usage</code>',
+		'跑 <code>s2_chat.py</code> 聊 5 輪，觀察 input tokens 怎麼增加',
+		'小挑戰：寫一個 for 迴圈，對 5 段假的活動描述各呼叫一次，要求輸出 JSON（活動類型、目標客群、主要指標），存成 <code>results.json</code>',
+	]}
+/>
+
+<Quiz
+	id="agent-s2"
+	questions={[
+		{ q: '為什麼聊天時 AI 好像記得你上一句說了什麼？', options: ['因為程式每次都把整段對話歷史重新送給它', '因為模型會自動把對話存在雲端大腦裡', '因為 API key 綁定了你的記憶'], answer: 0, explain: '模型本身是無狀態的，「記憶」由你的程式負責保管和重送。理解這點，你就理解了為什麼對話越長越貴、越慢。' },
+	]}
+/>

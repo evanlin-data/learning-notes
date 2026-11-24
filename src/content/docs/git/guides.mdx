@@ -1,0 +1,508 @@
+---
+title: GitHub Git Guides 重點整理
+description: GitHub 官方 Git Guides 的繁體中文重點整理：init、clone、add、commit、remote、status、pull、push 的定義、常用選項與常見情境。
+---
+
+import Quiz from '../../../components/Quiz.astro';
+import Checklist from '../../../components/Checklist.astro';
+import Diagram from '../../../components/Diagram.astro';
+
+整理自 GitHub 官方 [Git Guides](https://github.com/git-guides) 的 10 頁內容（2026 年 10 月版本），翻成繁體中文重點，並補充新手實際操作時常遇到的情況。詳細內容請以原文為準。
+
+**怎麼用這份筆記**
+
+- 每個指令都有**一句話定義**、**常用選項**、**原文強調的重點**。
+- 「補充說明」框是**本站補充的**，原文沒有寫，方便你分辨哪些是官方內容。
+- 「實際情境」框是**練習時常碰到的狀況**，對照著看會更有印象。
+- 每節最後有一題**自問自答**，先在心裡回答，再展開看答案。
+- 覺得某節熟了，就在下面的清單打勾。
+
+<Checklist
+	id="git-guides"
+	title="✅ 我會了"
+	items={['Git 總覽', 'Install Git', '<code>git init</code>', '<code>git clone</code>', '<code>git add</code>', '<code>git commit</code>', '<code>git remote</code>', '<code>git status</code>', '<code>git pull</code>', '<code>git push</code>']}
+/>
+
+## Git 總覽
+
+> Git 是一套**分散式版本控制**軟體：能保存每次的改動，又不會蓋掉舊版本。「分散式」的意思是每個人電腦上都有一份**完整的** repo，包含所有 commit、所有分支、所有檔案。
+
+### 入門前要知道的三件事
+
+- **分支很輕、很便宜**：開很多個也沒關係。
+- Git 用 SHA 雜湊來儲存改動。這種方式很適合純文字的程式碼，**不太適合圖片、影片這類二進位檔**。
+- repo 之間可以互相連結：你在自己電腦上工作，再跟共用的 repo 互相 push、pull。
+
+### 為什麼用 Git（原文列出的 4 個優點）
+
+| 優點 | 白話 |
+|---|---|
+| Speed 速度快 | SHA 壓縮讓它非常快 |
+| Merge conflicts 能處理衝突 | 多人可以同時改同一個檔案，Git 會幫忙合併 |
+| Cheap branches 分支便宜 | 在分支這個「安全沙盒」裡，還沒寫好的東西也可以先 commit、push 上去，請人給意見 |
+| Ease of roll back 容易退回 | commit 是**不可變的**。「改歷史」其實是產生新的替代 commit，不會改動舊的。所以就算在 main 上犯錯也救得回來 |
+
+原文的態度：**commit 要早、要頻繁**（Commit often and commit early），這樣就不會有「改的東西被蓋掉了」那種心臟一沉的感覺。
+
+### ⭐ 官方的標準工作流程（最重要）
+
+<Diagram name="guides-workflow" />
+
+1. **開分支**：從 main 分出去，名字照**功能**來取。HEAD 現在指在哪裡，新分支就從哪裡長出來。
+2. **改 + commit**：`git add [file]` → `git commit -m "說明"`。
+3. **push**：在本機 commit 的東西只有你自己看得到。新分支第一次推送要用 `git push -u origin [branch]`。如果被擋下來，代表遠端有新的 commit，先 `git pull`，解決衝突後再 push。
+4. **開 Pull Request**：PR 就是「比較兩條分支」。說明要寫清楚：這個改動跟什麼有關、為什麼要改、做完了哪些、還剩哪些、需要誰幫忙看。
+5. **協作**：原文特別強調，**PR 應該在工作開始時就開，不是做完才開**，這樣團隊能早點看到你在做什麼。之後在同一條分支上繼續 commit、push，PR 會自動更新。
+6. **合併進 main**：合併後 PR 會自動關閉。**記得刪掉分支**，下次要做新的東西，再從最新的 main 開一條新分支。
+
+### 原文列的 10 個最常用指令
+
+| 指令 | 作用 |
+|---|---|
+| `git clone [url]` | 下載 GitHub 上已經存在的 repo，包含全部檔案、分支和 commit |
+| `git status` | 看你在哪條分支、哪些檔案在工作區或暫存區，以及其他重要資訊 |
+| `git branch` | 列出本機分支。`git branch [名字]` 建立新分支；`git branch --all` 連遠端追蹤分支一起列出 |
+| `git checkout [branch]` | 切換到指定分支，並更新工作區的檔案 |
+| `git add [file]` | 為檔案拍快照，放進暫存區 |
+| `git commit -m "..."` | 把快照永久記錄到版本歷史裡 |
+| `git pull` | 把遠端分支的新 commit 更新到你目前的本機分支。**等於 fetch + merge** |
+| `git push` | 把本機分支的 commit 上傳到遠端 |
+| `git log` | 瀏覽專案的演變歷史 |
+| `git remote -v` | 顯示連結的遠端 repo 和它的名字（例如 origin） |
+
+:::note[補充說明（原文沒有）]
+原文用的是 `git checkout [branch]` 和 `git checkout -b [branch]`，本站的[《Git & GitHub 從零開始》](../basics/)用的是 `git switch [branch]` 和 `git switch -c [branch]`。**兩組效果一樣**，switch 是比較新、用途比較單一的寫法。看到同事或文件用 checkout，不用困惑。
+:::
+
+:::tip[原文提醒]
+GitHub.com 網頁、GitHub Desktop、終端機都能操作 Git，但**只有終端機能用到全部功能**。
+:::
+
+<details>
+<summary>🤔 自問自答：Git 和 GitHub 的分工是什麼？</summary>
+
+Git 負責底層的版本控制；GitHub 是建立在 Git 之上的**協作平台**，提供 PR、留言、review、自動測試、保護分支、GitHub Actions 等功能。大多數開發者在本機開發，用 GitHub 來協作。
+
+</details>
+
+## Install Git
+
+> 大部分的 Mac 和 Linux **預設就已經裝好 Git**。打開終端機，輸入 `git version` 確認。
+
+| 系統 | 安裝方式 |
+|---|---|
+| Mac | ① 從 git-scm 下載 macOS 安裝檔 ② 用 Homebrew：`brew install git` |
+| Windows | 下載 Git for Windows 安裝檔，會附帶 **Git Bash**（推薦用的命令列） |
+| Linux（Debian/Ubuntu） | `sudo apt-get update` → `sudo apt-get install git-all` |
+| Linux（Fedora） | `sudo dnf install git-all` |
+| 任何系統 | 安裝 **GitHub Desktop** 時，也會順便裝好最新版的 Git |
+
+裝完一律用 `git version` 驗證。
+
+:::tip[實際情境]
+很多教學寫的是 `git --version`，跟 `git version` 效果一樣。
+:::
+
+:::note[補充說明（原文沒有）]
+Install 這頁**沒有提到**裝完要設定名字和 email（`git config user.name / user.email`）。但這一步很重要。如果同一台電腦同時用公司和個人的 GitHub 帳號，commit 的作者常常會顯示錯，原因通常就是 email 設定。可以在個別 repo 裡打 `git config user.email "..."`（不加 `--global`），只改這個 repo 的設定。
+:::
+
+## git init
+
+> 把任何資料夾變成 Git repo。Git 會在裡面建一個隱藏的 `.git` 資料夾，所有歷史紀錄都存在裡面。**有沒有 `.git`，就是普通資料夾和 repo 的差別。**
+
+### 常用選項
+
+| 指令 | 作用 |
+|---|---|
+| `git init` | 把**目前**的資料夾變成 repo |
+| `git init <directory>` | 把目前路徑下的某個資料夾變成 repo |
+| `git init --bare` | 建立「bare repo」，只拿來當遠端用，不在裡面開發 |
+
+### ⭐ init 還是 clone？（原文重點）
+
+**規則：開始一個 repo，用 init 或 clone 其中一個，不要兩個都用。**
+
+- **專案只在你電腦上、還沒用 Git** → 用 `git init`。整個專案只需要做一次，就算之後有其他協作者也一樣。
+- **遠端已經有這個 repo** → 用 `git clone`，不要 init。
+
+**init 之後要接上 GitHub 的完整步驟**（原文順序）：
+
+```bash
+git init                                  # 1. 初始化
+# 2. 到 GitHub 建一個遠端 repo
+git remote add origin <URL>               # 3. 用 origin 這個名字記住遠端網址
+git add . && git commit -m "..."          # 4. 至少要有一個 commit
+git push -u origin main                   # 5. 推上去，並建立追蹤關係
+```
+
+如果遠端 repo **已經有 commit 和檔案**，但你還是想把專案放進去：先 clone 那個 repo，把你的檔案搬進去，再 add、commit、push。
+
+:::tip[實際情境]
+如果你跟著《從零開始》第 8 節做過 git-practice，走的就是這條路：init → 到 GitHub 建 repo → `remote add origin` → `push -u origin main`。
+:::
+
+### ⚠️ 在錯的地方 init 了怎麼辦
+
+如果在不該 init 的資料夾（例如整個家目錄）init 了，Git 會出現奇怪的錯誤訊息。處理方式：
+
+1. 用 `git status` 看目前資料夾是否被 Git 追蹤，用 `ls -al` 找隱藏的 `.git`。
+2. 如果這一層找不到，就 `cd ..` 往上一層，重複上面的檢查，直到找到為止。
+3. 確定那個資料夾不該是 repo，就執行 `rm -rf .git`，取消 init。
+4. 再跑一次 `git status` 確認已經不再被追蹤。注意：有可能好幾層都有 `.git`。
+
+:::danger
+`rm -rf .git` 會**永久刪除這個 repo 的所有歷史**，執行前一定要確認位置對不對。
+:::
+
+<details>
+<summary>🤔 自問自答：同事已經在 GitHub 上建好專案，你要加入一起做，應該打 init 還是 clone？</summary>
+
+`git clone [url]`。遠端已經存在的 repo 就用 clone，不要 init。
+
+</details>
+
+## git clone
+
+> 複製一份遠端 repo 到你的電腦。拿到的不只是檔案，而是**整個 repo：所有檔案、所有分支、所有 commit**。
+
+- clone 通常**只在一開始做一次**。之後的日常開發用 pull、push 就好，不用再 clone。
+- 有了完整的 repo，你可以在 feature 分支上安心地改，之後 push → 開 PR → 測試 → 合併進 main。
+
+### 常用選項
+
+| 指令 | 作用 / 什麼時候用 |
+|---|---|
+| `git clone [url]` | **最常用**，下載整個 repo |
+| `git clone [url] --branch [b] --single-branch` | 只 clone 某一條分支。原文說**除非 repo 非常大、塞了很多二進位檔，否則沒什麼好處** |
+| `git clone --sparse` | 只放根目錄的檔案，適合超大型 repo |
+| `git clone --mirror` | 做一份鏡像備份（不能編輯），用於搬遷 Git 主機或自動化測試 |
+| `git clone --recurse-submodules` | 連同子模組一起 clone |
+
+預設情況下，clone 會為遠端的**每一條**分支建立「遠端追蹤分支」，但**只會建立一條本機分支**，也就是預設分支（通常是 main）。
+
+### HTTPS 還是 SSH？
+
+看你用哪種方式驗證身份。通常整台電腦統一用一種，不會兩種混著用。
+
+:::tip[實際情境]
+如果你用 `gh auth login` 時選的是 **HTTPS**，clone 時就用 `https://github.com/...` 開頭的網址；選 SSH 的話，就用 `git@github.com:...` 開頭的網址。
+:::
+
+<details>
+<summary>🤔 自問自答：clone 完之後，打 <code>git branch</code> 只看到 main，其他分支是不是沒下載？</summary>
+
+有下載。其他分支是以「遠端追蹤分支」的形式存在，用 `git branch --all` 就看得到（通常顯示成紅色的 `remotes/origin/...`）。clone 只會幫你建立預設分支這一條本機分支。
+
+</details>
+
+## git add
+
+> 把工作區裡新增或修改的檔案放進**暫存區（staging area）**，標記成「下一個 commit 要包含的內容」。**沒有 add，commit 就沒有東西可以存。**
+
+- add 讓你**不用改變工作習慣，也能整理出乾淨的歷史**。就算你一口氣改了很多不相關的東西，也可以分批 add、分批 commit。
+- 可以 add 全部檔案、一個資料夾、特定檔案，甚至**檔案裡的某一段**。
+- **刪除檔案也要 add**：add 一個已刪除的檔案，就是把「刪除」這個動作放進暫存區。原文建議把 add 想成 `git stage`，比較不會混淆。
+
+### 常用選項
+
+| 指令 | 作用 |
+|---|---|
+| `git add <path>` | 暫存特定檔案或資料夾（**原文認為最安全、最清楚**） |
+| `git add -A` | 暫存整個 repo 的所有改動（.gitignore 裡的除外） |
+| `git add .` | 暫存**目前資料夾**以下的所有改動 |
+| `git add -u` | 只暫存修改和刪除，**不包含新檔案** |
+| `git add -p` | 互動式地一段一段挑要暫存哪些改動 |
+
+### 三種「全部 add」的差別（原文表格）
+
+| 指令 | 新檔案 | 修改 | 刪除 | 點開頭的檔案 | 目前資料夾 | 上層資料夾 |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| `git add -A` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| `git add .` | ✔ | ✔ | ✔ | ✔ | ✔ | ✘ |
+| `git add -u` | ✘ | ✔ | ✔ | ✔ | ✔ | ✔ |
+
+簡單記：`.` 只管你「站的這層以下」；`-A` 管整個 repo；`-u` 不管新檔案。
+
+### ⚠️ 一次 add 全部的兩個風險
+
+1. **歷史變得亂**：commit 太大、混了不相關的改動，就失去回頭看歷史的價值。
+2. **不小心把不該提交的檔案 commit 進去**：沒寫進 .gitignore 的檔案都會被加進來，包括大型二進位檔，以及**含有密碼或 token 的檔案**。
+
+### add 錯了怎麼退回
+
+原文的方法：`git reset HEAD`（等於 `git reset --mixed HEAD`），把暫存區的東西退回工作區，不影響已經 commit 的歷史。
+
+:::caution[原文提醒]
+如果一個檔案 add 之後**你又繼續改它**，這時工作區和暫存區的版本已經不一樣了。在這種情況下退回暫存，有可能蓋掉工作區裡還沒暫存的改動。比較安全的做法是先全部 add，再一起退回。
+:::
+
+:::note[補充說明（原文沒有）]
+`git restore --staged 檔名` 是比較新的寫法，效果跟 `git reset HEAD 檔名` 一樣，都是「從紙箱拿出來」。
+:::
+
+<details>
+<summary>🤔 自問自答：你改了 SQL 查詢，也順手修了 README 的錯字。依照原文的精神，應該怎麼 commit？</summary>
+
+分成兩個 commit：先 `git add query.sql` → commit，再 `git add README.md` → commit。commit 應該是「邏輯上獨立的一個改動單位」（logical, atomic units of change）。
+
+</details>
+
+## git commit
+
+> 建立一個 commit，也就是**整個 repo 在某個時間點的快照**。除了內容和說明之外，還會記下作者、時間等資訊。長期累積下來，commit 應該能講出這個 repo 是怎麼變成現在這樣的「故事」。
+
+- commit 會建在**你目前所在的分支**（HEAD 指的地方）。所以 **commit 前先打 `git status`**，確認你在對的分支上。
+- commit 分**兩個階段**：先 add 選內容，再 commit。Git 只看暫存區裡有什麼。
+- 只要是純文字檔，不用擔心檔案太多、太大或 commit 太頻繁，Git 都處理得了。
+
+### 常用選項
+
+| 指令 | 作用 |
+|---|---|
+| `git commit` | 沒加 `-m`，會打開預設編輯器（通常是 Vim）讓你寫說明 |
+| `git commit -m "..."` | 直接把說明寫在同一行 |
+| `git commit -am "..."` | 自動 add **已經被追蹤**的檔案再 commit。**新檔案不會被加進去** |
+| `git commit --amend` | 用一個新的 commit 取代**最近一次**的 commit |
+
+:::note[補充說明（原文沒有）]
+原文說離開 Vim 用 `Esc` → `:wq` → Enter，這是**存檔並完成 commit**。另一個常見的 `:q!` 則是**不存檔、直接放棄**這次 commit。想送出就用 `:wq`，想取消就用 `:q!`。
+:::
+
+### ✍️ commit 說明的寫法（原文規範）
+
+簡短、描述這次的改動，用**現在式、祈使句**（像下指令一樣）：
+
+```bash
+git commit -m "create file structure for Git guides"
+git commit -m "translate Git cheat sheet into German"
+git commit -m "update broken URL to Git resources"
+```
+
+寫中文時也可以照同樣的精神，例如「新增留存率查詢」「修正金額重複計算」，用動詞開頭。
+
+### ⭐ 撤銷 commit：三個工具
+
+:::caution[最重要的原則]
+撤銷**已經推到遠端**的 commit，可能會給協作者造成大麻煩；撤銷**只在本機**的 commit 安全得多。
+:::
+
+| 工具 | 做什麼 | 安全程度 |
+|---|---|---|
+| `git revert` | 不刪除舊 commit，而是新增一個「反向」的 commit 來抵銷它。**原文說只要可以，一律推薦用這個** | 🟢 最安全 |
+| `git reset` | 把 HEAD 和分支指標移到另一個時間點，看起來就像中間的 commit 從來沒發生過。分 `--soft`、`--mixed`、`--hard` 三種 | 🔴 可能弄丟東西 |
+| `git reflog` | 記錄 HEAD 去過的每一個地方。reset 不小心弄丟 commit 時，從這裡可以找回來 | 🛟 救命用 |
+
+用 `git reset` 之前：① 如果動到共用的 commit，先跟團隊講 ② 搞清楚三種模式的差別 ③ **不想丟的東西先 commit**。commit 過的東西救得回來，沒 commit 的就救不回來了。
+
+### 為什麼改共用的歷史很危險？（原文的例子）
+
+同事刪掉了最新的一個 commit，然後 force push。但你手上的版本還有那個 commit，等你下次 pull 再 push，**那個被刪的 commit 就又回到共用歷史裡了**。如果它裡面是密碼、token 或大檔案，就會在**沒有任何警告**的情況下又跑回來。
+
+### `--amend` 適合的情況
+
+只會改**最近一次** commit。適合用在：**還沒 push**、說明打錯字、或漏了想放進去的改動。
+
+:::tip[實際情境]
+發現過去的 commit 作者 email 設錯了，用 rebase 配合 `--amend --reset-author` 改寫作者，再 force push。如果 repo **只有你一個人在用**，這樣做沒問題；但只要有其他人 pull 過，就會碰到上面說的「改共用歷史」風險。
+:::
+
+<details>
+<summary>🤔 自問自答：main 上有一個已經 push 的 commit 把報表算錯了，團隊其他人也已經 pull 了。要用 revert 還是 reset？</summary>
+
+`git revert`。它會新增一個反向 commit，不改寫別人已經拿到的歷史。reset 加上 force push 會讓大家的歷史對不上。
+
+</details>
+
+## git remote
+
+> 管理你的本機 repo 連到了哪些遠端 repo。這個指令本身不常打，但「遠端」這個概念支撐了很多其他操作。
+
+| 指令 | 作用 |
+|---|---|
+| `git remote -v` | 列出目前連結的遠端 |
+| `git remote add [name] [URL]` | 新增一個遠端 |
+| `git remote remove [name]` | 移除一個遠端 |
+
+### origin 和 upstream
+
+- **origin**：遠端網址的「好記名字」，像 key-value 一樣，origin 是預設的名字。
+- **upstream**：fork 別人的專案時，origin 指向**你的 fork**，原本的專案通常再加一個遠端叫 upstream，方便把原專案的更新拉下來。
+
+### ⭐ 只有 4 個指令會跟遠端溝通
+
+<Diagram name="guides-remote" caption="除了這 4 個指令，其他操作（add、commit、branch、merge、log…）全部只在本機進行" />
+
+### 遠端追蹤分支 vs 本機工作分支
+
+- **遠端追蹤分支**（`git branch --all` 裡通常是紅色的）：遠端分支的**唯讀副本**，每次 fetch 或 pull 時更新。它們**不會自動刪除**，會越積越多。用 `git fetch --prune` 可以清掉遠端已經刪除的分支。
+- **本機工作分支**：你實際在上面工作的分支，可以連到某條遠端分支，也可以沒有對應的遠端分支。
+
+:::tip[實際情境]
+例如打過 `git remote add origin https://github.com/your-name/git-practice.git` 之後，再打 `git remote -v`，會看到 fetch 和 push 兩行都指向這個網址。
+:::
+
+<details>
+<summary>🤔 自問自答：你一整天都在本機 add、commit、merge，沒有網路也能做嗎？</summary>
+
+可以。只有 push、clone、pull、fetch 這 4 個指令需要連到遠端，其他操作都只在本機進行。
+
+</details>
+
+## git status
+
+> 顯示工作區和暫存區目前的狀態。**不確定的時候就打 `git status`**，它只會顯示資訊，**不會改動任何東西**。
+
+### 它會告訴你
+
+- **HEAD 指向哪裡**：是某條分支，還是某個 commit（也就是你「站在」哪裡）。
+- 有哪些改過、但還沒 commit 的檔案。
+- 這些改動有沒有被暫存（add 過了沒）。
+- 如果本機分支有連到遠端分支，會顯示你**領先（ahead）或落後（behind）幾個 commit**。
+- 發生衝突時，會列出**到底是哪些檔案衝突**。
+
+| 指令 | 作用 |
+|---|---|
+| `git status` | 預設格式，最常用 |
+| `git status -s` | 精簡格式 |
+| `git status -v` | 詳細格式，連還沒 commit 的文字改動都列出來 |
+
+:::tip[實際情境]
+例如 rebase 做到一半卡住時，`git status` 會顯示 `interactive rebase in progress` 和 `No commands remaining`，從這些訊息就知道還差一步 `git rebase --continue`。這正是原文說的「它會依照你目前的情況給出有用的資訊」。
+:::
+
+<details>
+<summary>🤔 自問自答：原文在 commit、pull、push 三頁都提醒要先做同一件事，是什麼？</summary>
+
+先打 `git status`。commit 前確認在對的分支上；pull 前確認沒有會被蓋掉的未 commit 改動；push 前確認自己在哪條分支（push 只會推目前這條）。
+
+</details>
+
+## git pull
+
+> 更新你目前的本機分支，以及所有遠端追蹤分支。**git pull = git fetch + git merge**。只要有在用遠端的 repo，**至少每天 pull 一次**。
+
+<Diagram name="guides-pull" />
+
+### 什麼時候改用 fetch？
+
+- **預期會有衝突**：先 fetch，Git 不會馬上合併，你可以晚點再處理衝突，而且到時候不需要網路。
+- **快要斷網了**（例如要上飛機）：先 fetch，把所有遠端分支的最新狀態抓下來。
+- 用了 fetch 之後，**記得自己再 merge**，否則你還是在舊的版本上工作。
+
+### 常用選項
+
+| 指令 | 作用 |
+|---|---|
+| `git pull` | 更新目前的分支和所有遠端追蹤分支 |
+| `git pull --rebase` | 把你本機的 commit 移到遠端新 commit 的後面，**不產生 merge commit**，歷史保持一直線 |
+| `git pull --all` | 抓所有遠端，fork 或有多個遠端時好用 |
+| `git pull --force` | 強制 fetch 某條遠端追蹤分支（搭配 refspec 用，很少用到） |
+
+### ⭐ 原文的三個好習慣
+
+1. **開工前先 pull**：就算只是休息一下，協作者也可能在這段時間改了你的分支。
+2. **pull 前先 `git status`**：還沒 commit 的改動，有可能被 pull 蓋掉，或讓 merge 卡住做不完。遇到這種情況，先把那些改動 commit 或刪掉，再 pull 一次。
+3. **開新分支前，先把 main pull 到最新**：不然新分支一開始就少了別人剛合併的東西，之後容易衝突或做重複的事。
+
+### 救援：撤銷一次 pull
+
+```bash
+git reflog                 # 找到 pull 之前所在的那個 commit
+git reset --hard <SHA>     # 回到那裡
+```
+
+fetch 沒辦法撤銷，但 merge 可以。reflog 只存在本機，保留 30 到 90 天。**這也是原文說「以為自己搞砸了，先別急著刪 repo」的原因**，reflog 還在裡面。
+
+### 救援：讓本機完全變成跟遠端一樣（放棄本機的 commit）
+
+```bash
+git fetch origin main
+git reset --hard origin/main
+```
+
+:::danger
+`reset --hard` 會丟掉本機還沒推上去的 commit 和改動，確定真的不要了再用。
+:::
+
+<details>
+<summary>🤔 自問自答：今天早上你要從 main 開一條新分支來做分析。第一步要做什麼？</summary>
+
+先 `git switch main`，再 `git pull` 把 main 更新到最新，最後才 `git switch -c 新分支`。
+
+</details>
+
+## git push
+
+> 把本機分支的 commit 上傳到對應的遠端分支。可以把它想成「更新」或「發布」。
+
+- **預設只推你目前所在的那條分支**。在 main 上 push，就只會更新遠端的 main。所以 push 前先 `git status`。
+- push 也會順便更新這條分支上還開著的 PR。
+- **最佳做法：push 之前先 pull**，把衝突留在本機解決，不要在 GitHub 上解。
+
+### 常用選項
+
+| 指令 | 作用 |
+|---|---|
+| `git push` | 推目前所在的分支 |
+| `git push -u origin [branch]` | 推送**新分支**時用，建立長期的追蹤關係，之後打 `git push` 就夠了 |
+| `git push -f` | 強制推送，會刪除或覆蓋遠端的 commit。**小心使用！** |
+| `git push --all` | 推送所有分支 |
+| `git push --tags` | 推送遠端還沒有的 tag |
+
+### ⭐ 為什麼推不上去？
+
+先用 `git status` 看你在哪條分支。如果你在**受保護的分支**（例如公司 repo 的 main）上，可能不允許直接 push，這很正常。
+
+**情況 1：改了東西，但還沒開分支**
+
+```bash
+git checkout -b [branchname]          # 從目前的 commit 開一條新分支（= git switch -c）
+git push -u origin [branchname]
+```
+
+**情況 2：commit 到錯的分支上**
+
+1. 切到你原本要 commit 的那條分支：`git checkout [branchname]`
+2. 把錯誤那條分支上的 commit 合併過來：`git merge [錯的分支]`
+3. `git push`
+4. 回到錯的那條分支，找到它原本應該停在的 commit，用 `git reset --hard` 把指標移回去。
+
+:::note[補充說明（原文沒有）]
+另一個常見原因原文放在總覽頁：遠端有你本機沒有的新 commit（錯誤訊息裡會有 `rejected`、`fetch first`）。解法是先 `git pull`，再 push。
+:::
+
+:::tip[實際情境]
+如果在 rebase 做到一半時打 `git push`，Git 會回 `You are not currently on a branch`，因為這時 HEAD 不在任何分支上。這也印證了「push 只推目前所在的分支」。
+:::
+
+<details>
+<summary>🤔 自問自答：你在新開的 <code>fix-sql</code> 分支 commit 完，第一次打 <code>git push</code> 失敗，該怎麼打？</summary>
+
+`git push -u origin fix-sql`。新分支第一次推送要告訴 Git 推到哪裡，並建立追蹤關係，之後打 `git push` 就夠了。
+
+</details>
+
+## 🎯 總測驗
+
+10 題，都根據 Git Guides 原文出題。
+
+<Quiz
+	id="git-guides"
+	questions={[
+		{ q: '遠端已經有 repo 了，你要開始參與。應該？', options: ['git init 然後 git clone', '只用 git clone', '只用 git init'], answer: 1, explain: '原文：init 和 clone 擇一，不要兩個都用。遠端已經存在就用 clone。' },
+		{ q: 'git pull 等於哪兩個指令的組合？', options: ['git fetch + git merge', 'git push + git merge', 'git clone + git fetch'], answer: 0, explain: 'fetch 更新遠端追蹤分支，merge 把它合併進你目前的分支。' },
+		{ q: '以下哪一個「不會」跟遠端溝通？', options: ['git fetch', 'git commit', 'git clone'], answer: 1, explain: '只有 push、clone、pull、fetch 這 4 個會連到遠端，commit 只在本機進行。' },
+		{ q: 'git add . 和 git add -A 的差別是？', options: ['完全一樣', 'add . 不包含上層資料夾的改動，-A 包含整個 repo', 'add . 不包含新檔案'], answer: 1, explain: '看原文那張表：. 只管目前資料夾以下；-A 管整個 repo。' },
+		{ q: 'git commit -am "..." 會把哪些檔案放進 commit？', options: ['所有檔案，包含新檔案', '只有已經被 Git 追蹤的檔案的改動', '只有新檔案'], answer: 1, explain: '-a 只會自動暫存已經被追蹤的檔案，新檔案還是要先 git add。' },
+		{ q: '已經 push、別人也 pull 了的錯誤 commit，原文最推薦用什麼撤銷？', options: ['git reset --hard', 'git revert', 'git commit --amend'], answer: 1, explain: 'revert 新增一個反向 commit，不改寫共用歷史，是最安全的方式。' },
+		{ q: 'reset 之後發現弄丟了 commit，該用哪個指令找回來？', options: ['git reflog', 'git status', 'git remote -v'], answer: 0, explain: 'reflog 記錄了 HEAD 去過的每個地方（只存在本機，保留 30 到 90 天）。' },
+		{ q: '原文對開 Pull Request 時機的建議是？', options: ['全部做完、測完才開', '工作一開始就開，讓團隊早點看到', '只有主管才能開'], answer: 1, explain: 'PR should be open when work is beginning：越早開，團隊越早看到你在做什麼。' },
+		{ q: 'git push 預設會推送哪些分支？', options: ['所有分支', '只推目前所在的那條分支', '只推 main'], answer: 1, explain: '所以 push 前要先用 git status 確認自己在哪條分支。' },
+		{ q: '原文建議 commit 說明怎麼寫？', options: ['越長越好', '簡短、用現在式祈使句，例如 "update broken URL"', '寫日期就好'], answer: 1, explain: '例如 create…、translate…、update…，用動詞開頭，描述這次的改動。' },
+	]}
+/>
+
+---
+
+資料來源：GitHub, [Git Guides](https://github.com/git-guides)：Git、Install Git、git init、git clone、git add、git commit、git remote、git status、git pull、git push，共 10 頁（2026 年 10 月版本）。本頁為中文重點整理，原文版權屬於 GitHub。「補充說明」和「實際情境」框是本站補充，不是原文內容。

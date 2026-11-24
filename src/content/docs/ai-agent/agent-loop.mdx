@@ -1,0 +1,193 @@
+---
+title: Agent Loop：親手寫出你的第一個 Agent
+description: 把一次工具呼叫變成迴圈，用約 50 行 Python 寫出會自己寫 SQL、查資料庫的分析 Agent，並學會判斷何時該用 Agent。
+---
+
+import Quiz from '../../../components/Quiz.astro';
+import Checklist from '../../../components/Checklist.astro';
+import Diagram from '../../../components/Diagram.astro';
+
+**第 4 週**，約 7 小時。
+
+:::note[本站目標]
+把[第 3 站](../tool-use/)的「一次工具呼叫」變成「迴圈」，讓 AI 自己決定要查幾次、查什麼，直到答完為止。完成後，你就有一個會自己寫 SQL、自己查資料庫的分析 Agent。
+:::
+
+## Agent 的本體，就是一個 while 迴圈
+
+聽起來很神秘的 Agent，核心邏輯只有一句：**只要 AI 還想用工具，就幫它執行，把結果還給它，再問一次；直到它說「我答完了」。**
+
+<Diagram name="agent-loop" caption="這個「思考→行動→觀察」的模式常被稱為 ReAct（Reason + Act），是大多數 Agent 的基本骨架。" />
+
+## 先準備假資料庫
+
+我們用 SQLite（一個檔案就是一個資料庫，不用安裝伺服器）做一份仿真的電商活動數據。數字完全是隨機產生的。
+
+```python title="make_demo_db.py"
+# 產生示範用假資料。作品集一律用假資料，不放公司真實數據
+import sqlite3, random, datetime as dt
+random.seed(42)
+con = sqlite3.connect("campaign_demo.db")
+con.executescript("""
+DROP TABLE IF EXISTS campaigns;
+DROP TABLE IF EXISTS daily_metrics;
+CREATE TABLE campaigns(
+  campaign_id TEXT PRIMARY KEY, name TEXT, type TEXT,
+  start_date TEXT, end_date TEXT);
+CREATE TABLE daily_metrics(
+  campaign_id TEXT, date TEXT, user_id INTEGER,
+  revenue_usd REAL, refund_usd REAL, items INTEGER, promo_cost_usd REAL);
+""")
+camps = [
+  ("CB2026_08", "August Cashback",    "cashback",   "2026-08-01", "2026-08-31"),
+  ("CP2026_09", "September Coupon",   "coupon",     "2026-09-01", "2026-09-30"),
+  ("LD2026_10", "October Lucky Draw", "lucky_draw", "2026-10-01", "2026-10-20"),
+]
+con.executemany("INSERT INTO campaigns VALUES (?,?,?,?,?)", camps)
+# 不同活動類型的成本率不同，讓 ROI 有差異可比較
+COST_RATE = {"cashback": 0.02, "coupon": 0.08, "lucky_draw": 0.01}
+rows = []
+for cid, _, ctype, s, e in camps:
+    d0, d1 = dt.date.fromisoformat(s), dt.date.fromisoformat(e)
+    users = random.sample(range(100000, 101000), 150)
+    for i in range((d1 - d0).days + 1):
+        day = (d0 + dt.timedelta(days=i)).isoformat()
+        for u in random.sample(users, 40):
+            rev = round(random.expovariate(1 / 800), 2)
+            rows.append((cid, day, u, rev,
+                         round(rev * random.uniform(0, 0.6), 2),
+                         random.randint(1, 6),
+                         round(rev * COST_RATE[ctype], 2)))
+con.executemany("INSERT INTO daily_metrics VALUES (?,?,?,?,?,?,?)", rows)
+con.commit()
+print(f"建立完成：{len(rows)} 筆資料")
+```
+
+## 把資料庫工具獨立成一個檔案
+
+工具函式放在 `db_tools.py`，[下一站](../mcp/)的 MCP 會直接重複使用它。注意 `run_sql` 用的是**唯讀模式**開資料庫，而且只接受 SELECT——就算 AI 寫出 DELETE，也動不了資料。
+
+```python title="db_tools.py"
+import sqlite3
+from pathlib import Path
+
+DB = Path(__file__).parent / "campaign_demo.db"     # 用絕對路徑，之後從別處啟動也找得到
+
+def _connect_readonly():
+    return sqlite3.connect(DB.as_uri() + "?mode=ro", uri=True)
+
+def get_schema():
+    """回傳所有資料表的 CREATE 語句"""
+    con = _connect_readonly()
+    rows = con.execute("SELECT name, sql FROM sqlite_master WHERE type='table'").fetchall()
+    con.close()
+    return {name: sql for name, sql in rows}
+
+def run_sql(query):
+    """執行唯讀 SELECT，最多回傳 50 列"""
+    if not query.strip().lower().startswith(("select", "with")):
+        return {"error": "只允許 SELECT / WITH 查詢"}
+    con = _connect_readonly()
+    try:
+        cur = con.execute(query)
+        cols = [d[0] for d in cur.description]
+        return {"columns": cols, "rows": cur.fetchmany(50)}
+    except Exception as e:
+        return {"error": str(e)}            # 錯誤回給 AI，讓它自己修 SQL
+    finally:
+        con.close()
+```
+
+## Agent 本體（約 50 行）
+
+```python title="s4_agent.py"
+import json
+from dotenv import load_dotenv
+from anthropic import Anthropic
+from db_tools import get_schema, run_sql
+
+load_dotenv()
+client = Anthropic()
+MODEL = "claude-sonnet-5-5"
+
+TOOL_FUNCS = {"get_schema": get_schema, "run_sql": run_sql}
+tools = [
+    {"name": "get_schema",
+     "description": "取得活動資料庫的所有資料表與欄位。寫 SQL 之前一定先呼叫。",
+     "input_schema": {"type": "object", "properties": {}}},
+    {"name": "run_sql",
+     "description": "在 SQLite 活動資料庫執行唯讀 SELECT 查詢，回傳欄位與最多 50 列。",
+     "input_schema": {"type": "object",
+                      "properties": {"query": {"type": "string", "description": "SQLite 語法的 SELECT"}},
+                      "required": ["query"]}},
+]
+
+SYSTEM = """你是電商平台的數據分析 Agent。
+- 先用 get_schema 了解資料表，再寫 SQL
+- 所有數字都必須來自 run_sql 的結果，不可自行估算
+- 淨營收 = 營收 - 退款；ROI = (淨營收 - 活動成本) / 活動成本
+- 用繁體中文回答，最後附上你使用的 SQL"""
+
+def run_agent(question, max_steps=10):
+    messages = [{"role": "user", "content": question}]
+    for step in range(1, max_steps + 1):              # 安全閥：最多跑幾輪
+        resp = client.messages.create(model=MODEL, max_tokens=2000,
+                                      system=SYSTEM, tools=tools, messages=messages)
+        messages.append({"role": "assistant", "content": resp.content})
+
+        if resp.stop_reason != "tool_use":                 # AI 說它答完了
+            return "".join(b.text for b in resp.content if b.type == "text")
+
+        results = []
+        for b in resp.content:                            # 一輪可能要用好幾個工具
+            if b.type == "tool_use":
+                print(f"[第 {step} 步] {b.name} {json.dumps(b.input, ensure_ascii=False)[:120]}")
+                out = TOOL_FUNCS[b.name](**b.input)
+                results.append({"type": "tool_result", "tool_use_id": b.id,
+                                "content": json.dumps(out, ensure_ascii=False, default=str)})
+        messages.append({"role": "user", "content": results})
+
+    return "超過步數上限，已停止。"
+
+if __name__ == "__main__":
+    print(run_agent("三個活動裡哪個 ROI 最高？列出各自的淨營收、活動成本和 ROI。"))
+```
+
+跑起來時，你會在終端機看到它一步一步「自己」決定：先看 schema，再寫 SQL，SQL 錯了會看錯誤訊息自己改，最後才寫結論。這就是 Agent。
+
+## 何時該用 Agent，何時不該
+
+這是面試很加分的判斷力。Anthropic 的文章〈Building effective agents〉提出一個實用的區分：
+
+|  | Workflow（固定流程） | Agent（自主決策） |
+|---|---|---|
+| 步驟 | 由你事先寫死：查數 → 算指標 → 寫摘要 | 由 AI 每一步自己決定 |
+| 適合 | 每週固定格式的活動週報 | 「九月營收為什麼掉了？」這種路徑未知的探索 |
+| 優點 | 穩定、便宜、好除錯 | 彈性大，能處理沒預料到的問題 |
+| 缺點 | 遇到例外就卡住 | 較貴、較慢、結果較不穩定 |
+
+原則：**能用簡單方法解決的，就不要用 Agent。** 先從 workflow 開始，真的需要彈性時再升級。
+
+## 框架要不要學？
+
+市面上有很多 Agent 框架，例如 Claude Agent SDK、OpenAI Agents SDK、LangGraph，以及 n8n 這類拖拉式的無程式碼工具。它們幫你處理迴圈、記憶、多 Agent 協作等雜事。
+
+建議順序是：**先親手寫過上面這 50 行**，再挑一個框架學。你懂了底層，換哪個框架都只是換語法；跳過底層直接學框架，出問題時會完全不知道從哪裡查。如果你已經在用 Claude Code，下一步自然的選擇是 Claude Agent SDK——它就是 Claude Code 背後的那套引擎。
+
+<Checklist
+	id="agent-s4"
+	items={[
+		'跑 <code>make_demo_db.py</code> 產生資料庫，用 DB Browser for SQLite 或 VS Code 外掛打開看看',
+		'跑通 <code>s4_agent.py</code>，記錄它用了幾步、寫了哪些 SQL',
+		'自己算一次正確答案（你寫 SQL），對照 Agent 的答案是否一致',
+		'試著要它「刪掉 LD2026_10 的資料」，確認唯讀保護有效',
+		'把 <code>max_steps</code> 改成 2，觀察會發生什麼，理解安全閥的作用',
+	]}
+/>
+
+<Quiz
+	id="agent-s4"
+	questions={[
+		{ q: '你的主管要每週一早上收到格式固定的活動週報。比較好的做法是？', options: ['做一個完全自主的 Agent，讓它自己決定每週要分析什麼', '先做固定流程（workflow）：固定的 SQL 撈數，再讓 AI 寫摘要', '每週一自己打開聊天介面手動問'], answer: 1, explain: '需求固定、格式固定，用 workflow 更穩定也更便宜。Agent 留給「路徑事先不知道」的問題，例如臨時的異常原因探查。' },
+	]}
+/>

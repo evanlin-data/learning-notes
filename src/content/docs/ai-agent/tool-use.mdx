@@ -1,0 +1,117 @@
+---
+title: Tool Use：給 AI 一雙手
+description: 理解 AI 如何使用工具，並寫出第一個能查活動數據的工具。整條路線最關鍵的一站。
+---
+
+import Quiz from '../../../components/Quiz.astro';
+import Checklist from '../../../components/Checklist.astro';
+import Diagram from '../../../components/Diagram.astro';
+
+**第 3 週**，約 6 小時。整條路線最關鍵的一站。
+
+:::note[本站目標]
+理解 AI 如何「使用工具」，並寫出第一個能查活動數據的工具。搞懂這站，後面的 Agent、MCP 都只是在這個基礎上延伸。
+:::
+
+## 最重要的一句話
+
+**AI 不會自己執行工具。它只會「說」：我想用某某工具，參數是這些。真正去執行的，是你的程式。**
+
+:::tip[比喻]
+就像主管（AI）坐在辦公室裡寫一張便條：「請幫我查 CB2026_08 的營收。」助理（你的程式）拿著便條去系統查好，把結果交回給主管，主管再根據結果寫結論。主管從頭到尾沒碰過系統。
+:::
+
+<Diagram name="agent-tool-use" caption="Tool use 的完整來回。注意 Claude 那條線從來沒有直接連到工具函式。" />
+
+## 怎麼告訴 AI 有哪些工具？
+
+每個工具用三樣東西描述：
+
+- **name**：工具名稱，例如 `get_campaign_metrics`
+- **description**：**最重要的欄位**。AI 完全是看這段文字決定「什麼時候該用這個工具」，所以要寫清楚它做什麼、何時該用、回傳什麼。
+- **input_schema**：參數的格式（用 JSON Schema 寫），例如需要一個字串 `campaign_id`。
+
+## 完整程式：會查活動數據的 AI
+
+```python title="s3_tool.py"
+import json
+from dotenv import load_dotenv
+from anthropic import Anthropic
+
+load_dotenv()
+client = Anthropic()
+MODEL = "claude-sonnet-5-5"
+
+# 1) 真正的工具：一個普通的 Python 函式（先用假資料）
+FAKE_DB = {
+    "CB2026_08": {"revenue_usd": 980000, "refund_usd": 410000, "promo_cost_usd": 21000},
+    "CP2026_09": {"revenue_usd": 1250000, "refund_usd": 690000, "promo_cost_usd": 58000},
+}
+
+def get_campaign_metrics(campaign_id):
+    if campaign_id not in FAKE_DB:
+        return {"error": f"找不到活動 {campaign_id}，可用的有 {list(FAKE_DB)}"}
+    return FAKE_DB[campaign_id]
+
+# 2) 給 AI 看的「工具說明書」
+tools = [{
+    "name": "get_campaign_metrics",
+    "description": "查詢單一活動期間的營收、退款與活動成本（美元）。"
+                   "當使用者問到某個活動的成效、營收或成本時使用。",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "campaign_id": {"type": "string", "description": "活動代碼，例如 CB2026_08"}
+        },
+        "required": ["campaign_id"],
+    },
+}]
+
+messages = [{"role": "user", "content": "CP2026_09 的淨營收是多少？"}]
+
+# ① 第一次呼叫：AI 決定要不要用工具
+resp = client.messages.create(model=MODEL, max_tokens=800, tools=tools, messages=messages)
+print("stop_reason:", resp.stop_reason)          # 預期是 tool_use
+
+# ② 找出 AI 想用的工具
+tool_call = next(b for b in resp.content if b.type == "tool_use")
+print("AI 想呼叫:", tool_call.name, tool_call.input)
+
+# ③④ 你的程式去執行
+result = get_campaign_metrics(**tool_call.input)
+
+# ⑤ 把 AI 剛才的回應、以及工具結果，加回對話
+messages.append({"role": "assistant", "content": resp.content})
+messages.append({"role": "user", "content": [{
+    "type": "tool_result",
+    "tool_use_id": tool_call.id,                 # 對應是哪一次呼叫
+    "content": json.dumps(result, ensure_ascii=False),
+}]})
+
+# ⑥ 第二次呼叫：AI 根據數據寫回答
+resp2 = client.messages.create(model=MODEL, max_tokens=800, tools=tools, messages=messages)
+print(resp2.content[0].text)
+```
+
+## 三個新手常踩的坑
+
+- **description 寫太短。** 只寫「查數據」，AI 不知道何時該用、該傳什麼。把它當成寫給新同事的說明。
+- **出錯就讓程式當掉。** 更好的做法是把錯誤訊息當結果回傳（像上面的 `error`），AI 看到後常常會自己修正，例如換一個正確的活動代碼再試。
+- **忘了把 assistant 的回應加回去。** tool_result 必須接在對應的 tool_use 之後，順序錯了 API 會報錯。
+
+<Checklist
+	id="agent-s3"
+	items={[
+		'跑通 <code>s3_tool.py</code>，印出 AI 想呼叫的工具和參數',
+		'問一個不存在的活動（例如 XX2026_01），觀察 AI 看到 error 後怎麼回應',
+		'問一個「不需要工具」的問題（例如「什麼是淨營收？」），確認 stop_reason 直接是 end_turn',
+		'新增第二個工具 <code>calc_roi(net_revenue, cost)</code>，問「CP2026_09 的 ROI 是多少？」——這時候你會發現需要呼叫兩次工具，程式卡住了。這就是下一站要解決的問題',
+	]}
+/>
+
+<Quiz
+	id="agent-s3"
+	questions={[
+		{ q: '在 tool use 中，是誰真正執行了 get_campaign_metrics 這個函式？', options: ['Claude 在雲端執行', 'Anthropic 的伺服器幫你執行', '你自己的 Python 程式'], answer: 2, explain: 'Claude 只負責「決定要用什麼工具、傳什麼參數」，執行永遠在你這邊。這也是為什麼你可以完全掌控工具的權限——例如只允許讀、不允許寫。' },
+	]}
+/>

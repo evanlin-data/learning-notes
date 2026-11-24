@@ -1,0 +1,97 @@
+---
+title: Skills：給 Agent 一本 SOP 手冊
+description: 分清楚 Tool、MCP、Skill 各自負責什麼，並寫一個搭配 MCP server 的 Skill，讓 Agent 知道團隊怎麼做分析。
+---
+
+import Quiz from '../../../components/Quiz.astro';
+import Checklist from '../../../components/Checklist.astro';
+import Diagram from '../../../components/Diagram.astro';
+
+**第 6 週**，約 5–6 小時。
+
+:::note[本站目標]
+分清楚 Tool、MCP、Skill 各自負責什麼，並寫一個搭配你 MCP server 的 Skill，讓 Agent 不只「能查資料」，還「知道你們團隊怎麼做分析」。
+:::
+
+## 工具給能力，Skill 給做法
+
+[第 5 站](../mcp/)之後，Agent 已經能查資料庫了。但它還不知道：淨營收要不要扣掉測試帳號的訂單？抽獎活動的成本該怎麼算？週報要用什麼格式？這些「團隊知識和做事方法」，就是 Skill 要裝的東西。
+
+:::tip[比喻]
+MCP 像是給新同事開好系統權限；Skill 像是交給他一本部門 SOP——「做活動週報時，先查這三張表、注意這兩個口徑陷阱、照這個格式寫」。有權限沒 SOP，他會亂做；有 SOP 沒權限，他做不了。
+:::
+
+## Skill 長什麼樣子
+
+一個 Skill 就是一個資料夾，裡面一定有一份 `SKILL.md`，也可以放範本、參考文件、腳本。
+
+```text title="資料夾結構"
+campaign-report/
+├── SKILL.md              # 必要：名稱、何時使用、步驟
+├── metrics.md            # 參考：指標口徑詳細定義
+├── template.md           # 範本：週報格式
+└── check_totals.py       # 腳本：驗證數字加總
+```
+
+```markdown title="campaign-report/SKILL.md"
+---
+name: campaign-report
+description: 撰寫活動成效報告時使用。觸發情境：活動週報、campaign report、
+  活動成效總結、比較多個活動 ROI。需要 campaign-tools MCP。
+---
+
+# 活動成效報告
+
+## 步驟
+1. 用 get_schema 確認資料表
+2. 用 run_sql 查詢每個活動的營收、退款、活動成本、參與人數
+3. 依 metrics.md 的口徑計算淨營收與 ROI
+4. 依 template.md 的格式撰寫
+5. 執行 check_totals.py 驗證各活動加總等於總計
+
+## 常見錯誤
+- 不要把 refund_usd 當成負數再減一次
+- 參與人數要用 COUNT(DISTINCT user_id)，不是 COUNT(*)
+```
+
+## 聰明的地方：按需載入
+
+你可能會想：如果有 50 個 Skill，全塞進 context 不就爆了？Skill 的設計是**分層載入**：
+
+<Diagram name="agent-skill-layers" caption="所以 description 寫得好不好，決定了 Skill 會不會在對的時機被觸發。" />
+
+:::note[實務連結]
+一份高品質的分析 Skill 通常包含：活動類型的判斷邏輯、指標口徑、資料粒度差異、常見 bug 清單。這一站要練的是：把 Skill 跟你自己寫的 MCP server 配成一組，變成完整可展示的作品。
+:::
+
+## 一張表分清所有名詞
+
+| 名詞 | 它是什麼 | 比喻 | 什麼時候用 |
+|---|---|---|---|
+| Prompt / System prompt | 每次對話給 AI 的指令 | 口頭交代 | 單次任務、角色設定 |
+| Tool | AI 可以呼叫的一個函式 | 一件工具 | 需要查、算、寫入外部系統 |
+| MCP server | 用標準格式打包好的一組工具 | USB-C 插頭 | 工具想給多個 AI 應用重複使用 |
+| Skill | 按需載入的做事方法與知識 | SOP 手冊 | 團隊流程、口徑、格式規範 |
+| CLAUDE.md | 專案層級的常駐說明 | 辦公室牆上的公告 | 每次都要知道的專案規則 |
+| Subagent | 被派去處理子任務的另一個 Agent | 派一位同事去處理 | 任務可拆開並行，或要隔離大量雜訊 |
+
+## 順便把 Claude Code 用到位
+
+Claude Code 本身就是一個成熟的 Agent，用好它也是一種能力展示。除了 Skill 和 MCP，值得認識的還有：**CLAUDE.md**（放在專案根目錄，寫專案規則，每次啟動都會讀）、**自訂 slash command**（把常用指令存成捷徑）、**subagent**（把子任務交給獨立的 Agent，主對話保持乾淨）、**hooks**（在特定事件自動執行腳本，例如每次改完檔就跑檢查）。
+
+<Checklist
+	id="agent-s6"
+	items={[
+		'在 <code>ai-agent-lab</code> 裡建立 <code>campaign-report</code> skill（SKILL.md + metrics.md + template.md）',
+		'在 Claude Code 裡（已接上你的 MCP）說「幫我寫三個活動的成效報告」，確認它有照 Skill 步驟做',
+		'故意把 description 寫得很模糊，比較觸發效果，再改回來',
+		'為 <code>ai-agent-lab</code> 寫一份 CLAUDE.md：專案目的、資料夾結構、「只用假資料」的規則',
+	]}
+/>
+
+<Quiz
+	id="agent-s6"
+	questions={[
+		{ q: '你想讓 Agent 知道「參與人數要用 COUNT(DISTINCT user_id)」，應該放在哪裡？', options: ['寫成一個新的 MCP tool', '寫進 Skill（或 CLAUDE.md）的口徑說明裡', '每次對話手動提醒它'], answer: 1, explain: '這是「做事方法與知識」，不是新能力。放進 Skill 可重複使用；如果是整個專案每次都適用的規則，也可以放 CLAUDE.md。' },
+	]}
+/>

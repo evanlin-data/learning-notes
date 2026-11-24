@@ -1,0 +1,49 @@
+---
+title: 總結與資源
+description: 走完 AI Agent 路線之後可以往哪裡走、現階段可以先不碰的東西、推薦資源與名詞小抄。
+---
+
+## 這套能力可以帶你去哪裡
+
+走完這條路線，你會有一個很少見的組合：懂業務指標、會寫 SQL、又能把 AI 安全地接進數據流程。這個組合可以支撐幾個方向：
+
+- **AI 加持的數據分析師**：最直接的方向，也就是現在很多 Data & AI 職缺在找的人。你能說出自己如何用 Agent 把分析流程自動化。
+- **Analytics Engineer 或 AI 應用工程師**：往技術走一步，負責替團隊建 MCP server、Skill 和自動化流程。
+- **AI 產品或 BA 角色**：往業務走一步。你懂 Agent 能做什麼、不能做什麼，能把業務需求翻成可落地的規格。
+
+現階段可以先不用碰的：從零訓練模型、深度學習的數學、fine-tuning（微調模型）、以及追著每個新框架跑。這些對 Data & AI 的入門職缺幫助有限，等你確定要往 ML 工程走再學也不遲。
+
+## 推薦資源
+
+- **[Claude 官方文件](https://docs.claude.com)**：API、tool use、Agent SDK 的第一手說明，型號名稱以這裡為準。
+- **[Anthropic〈Building effective agents〉](https://www.anthropic.com/engineering/building-effective-agents)**：workflow 與 agent 的取捨，面試前必讀。
+- **[Anthropic courses](https://github.com/anthropics/courses)**：互動式 prompt engineering 與 tool use 教學。
+- **[MCP 官方網站](https://modelcontextprotocol.io)**：規格、Python SDK、官方 server 清單。
+- **[DeepLearning.AI 短期課程](https://www.deeplearning.ai/short-courses/)**：有多門 Agent、MCP、RAG 的一小時入門課。
+
+## 名詞小抄
+
+| 名詞 | 白話解釋 | 在哪一站 |
+|---|---|---|
+| LLM | 大型語言模型，Agent 的大腦 | [1](../llm-prompt/) |
+| Token | 模型讀寫的最小單位，也是計費單位 | [1](../llm-prompt/) |
+| Context window | 模型一次能看到的內容上限，大腦的書桌 | [1](../llm-prompt/)、[7](../rag-memory/) |
+| Hallucination | 幻覺，一本正經地講錯 | [1](../llm-prompt/) |
+| System prompt | 對話前給 AI 的角色與規則設定 | [1](../llm-prompt/)、[2](../api/) |
+| API | 讓程式呼叫 AI 的介面 | [2](../api/) |
+| Tool use / Function calling | AI 決定要呼叫哪個工具、傳什麼參數，由你的程式執行 | [3](../tool-use/) |
+| JSON Schema | 描述工具參數格式的寫法 | [3](../tool-use/) |
+| Agent loop / ReAct | 思考、行動、觀察的循環 | [4](../agent-loop/) |
+| Workflow | 事先寫死步驟的 AI 流程 | [4](../agent-loop/) |
+| MCP | 工具接上 AI 應用的標準協定，USB-C | [5](../mcp/) |
+| Host / Server | MCP 中的 AI 應用端 / 工具提供端 | [5](../mcp/) |
+| Skill | 按需載入的做事方法與知識，SOP 手冊 | [6](../skills/) |
+| Subagent | 被派去處理子任務的 Agent | [6](../skills/) |
+| RAG | 先搜尋相關資料，再讓 AI 根據資料回答 | [7](../rag-memory/) |
+| Embedding | 把文字轉成座標，意思相近就靠得近 | [7](../rag-memory/) |
+| Eval set | 固定題目加正確答案，用來衡量 Agent 表現 | [8](../eval-safety/) |
+| Prompt injection | 藏在資料裡、想劫持 AI 的惡意指令 | [8](../eval-safety/) |
+
+---
+
+程式範例以 Anthropic Python SDK 與 MCP Python SDK 撰寫。AI 工具更新很快，型號名稱與安裝指令如遇問題，以官方文件為準。

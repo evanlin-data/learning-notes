@@ -1,0 +1,38 @@
+---
+title: AI Agent 學習路線
+description: 為數據分析師設計的 8 週 AI Agent 學習路線：從會用 AI，到會自己造一個 AI Agent。
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+import RouteMap from '../../../components/RouteMap.astro';
+
+**從會用 AI，到會自己造一個 AI Agent。**
+
+一條為數據分析師設計的 8 週路線，每週 5–8 小時。沿途 10 站，終點是一個能放進作品集的「Campaign 分析 Agent」：你用中文問問題，它自己寫 SQL、查資料、算指標、寫報告。
+
+<RouteMap />
+
+點任一站就能直接跳過去。完成某一站的「動手做」清單後，那一站的圓點會填滿。
+
+## 怎麼使用
+
+一次走一站：讀完概念 → 看圖 → 跑程式 → 勾選「動手做」→ 做小測驗。每一站的勾選進度存在你這台電腦的瀏覽器裡。頁面最下方有「下一頁」按鈕，可以照順序走。
+
+**適合誰：** 會一點 SQL，看得懂基本的 Python 更好，用過 ChatGPT 或 Claude 這類聊天工具。不需要機器學習背景。範例使用虛構的電商活動資料，你可以換成自己熟悉的領域。
+
+## 8 週總覽
+
+| 週 | 站 | 時數 | 這週的產出 |
+|---|---|---|---|
+| 1 | [起點](what-is-agent/)、[LLM 與 Prompt](llm-prompt/) | 6 | ai-agent-lab repo、三版 prompt 比較筆記 |
+| 2 | [用程式叫 AI](api/) | 5–6 | 能跑的聊天程式、批次 JSON 輸出 |
+| 3 | [Tool Use](tool-use/) | 6 | 會查假數據的 s3_tool.py |
+| 4 | [Agent Loop](agent-loop/) | 7 | 會自己寫 SQL 的 s4_agent.py |
+| 5 | [MCP](mcp/) | 6–7 | 接上 Claude Code 的 campaign-tools |
+| 6 | [Skills](skills/) | 5–6 | campaign-report skill、CLAUDE.md |
+| 7 | [RAG 與記憶](rag-memory/)、[評估與安全](eval-safety/) | 7 | mini RAG、10 題以上評估集、SECURITY.md |
+| 8 | [畢業專案](capstone/) | 8 | GitHub 上的完整作品、履歷條目 |
+
+卡關時不用硬撐：把錯誤訊息完整貼給 Claude，請它解釋原因而不是只給答案。這本身也是一種用 AI 學習的好習慣。
+
+<LinkCard title="開始第 0 站：AI Agent 到底是什麼" description="第 1 週前半，約 2 小時，只讀不寫程式" href="what-is-agent/" />

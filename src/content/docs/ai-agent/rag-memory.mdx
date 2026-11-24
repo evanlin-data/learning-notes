@@ -1,0 +1,91 @@
+---
+title: RAG、記憶與 Context Engineering
+description: 資料太多、放不進 context 時有哪些做法：RAG 的原理、embedding、短期與長期記憶，以及「整理書桌」的思維。
+---
+
+import Quiz from '../../../components/Quiz.astro';
+import Checklist from '../../../components/Checklist.astro';
+import Diagram from '../../../components/Diagram.astro';
+
+**第 7 週前半**，約 3–4 小時。
+
+:::note[本站目標]
+知道當資料「太多、放不進 context」時有哪些做法，理解 RAG 和長期記憶的原理，並學會「整理書桌」的思維。
+:::
+
+## 三種讓 AI 知道你資料的方法
+
+從簡單到複雜，依資料量選擇。原則和[第 4 站](../agent-loop/)一樣：能用簡單的就不要用複雜的。
+
+1. **直接放進 prompt**：資料只有幾頁，例如 10 條指標定義。最簡單，通常也最準。
+2. **放在檔案裡讓 Agent 按需讀取**：例如 Skill 的附檔，或給它一個 `read_file` 工具。資料幾十份文件時好用。
+3. **RAG（檢索增強生成）**：資料有成千上萬份（全公司的活動企劃書、規則文件），先「搜尋」出最相關的幾段，只把那幾段放進 context。
+
+## RAG 的流程
+
+<Diagram name="agent-rag" />
+
+### 搜尋怎麼做？從關鍵字到「意思」
+
+最簡單的搜尋是比對關鍵字。但「淨營收」和「net revenue」字面完全不同、意思一樣，關鍵字就找不到。所以 RAG 常用 **embedding**：把每段文字轉成一串數字（座標），意思相近的文字，座標也靠得近。搜尋時把問題也轉成座標，找距離最近的段落。
+
+:::tip[比喻]
+想像一張地圖，所有「營收相關」的句子聚在東北角，「優惠規則」聚在西南角。問題丟進來，看它落在哪一區，就抓那一區最近的幾句。
+:::
+
+先用最陽春的關鍵字版本體會流程，懂了再換成 embedding 工具（例如 Chroma 這類向量資料庫）：
+
+```python title="s7_mini_rag.py"
+DOCS = [
+    {"title": "淨營收", "keys": ["淨營收", "營收", "退款"],
+     "text": "淨營收 = 活動期間營收 - 退款，不含測試帳號的訂單。"},
+    {"title": "ROI", "keys": ["ROI", "報酬", "划算"],
+     "text": "ROI = (淨營收 - 活動成本) / 活動成本，活動成本為零時不計算。"},
+    {"title": "參與人數", "keys": ["參與", "人數", "用戶"],
+     "text": "參與人數以 COUNT(DISTINCT user_id) 計算。"},
+]
+
+def retrieve(question, k=2):
+    scored = [(sum(key in question for key in d["keys"]), d) for d in DOCS]
+    scored = [x for x in scored if x[0] > 0]
+    scored.sort(key=lambda x: -x[0])
+    return [d for _, d in scored[:k]]
+
+question = "這個活動划算嗎？ROI 怎麼算？"
+context = "\n".join(f"- {d['title']}：{d['text']}" for d in retrieve(question))
+prompt = f"根據以下定義回答問題。\n<docs>\n{context}\n</docs>\n問題：{question}"
+print(prompt)            # 把這個 prompt 送給 client.messages.create 就完成一個 RAG
+```
+
+## 記憶：短期和長期
+
+**短期記憶**就是[第 2 站](../api/)的對話歷史，關掉程式就沒了。**長期記憶**是讓 Agent 把重要的事寫進檔案或資料庫，下次啟動時再讀回來。
+
+:::note[實務連結]
+很多 AI 工具的長期記憶原理都很樸素：把重要的事寫進幾個 markdown 檔案（例如 Claude Code 專案裡的 CLAUDE.md），每次對話開始時讀進來。
+:::
+
+## Context Engineering：整理書桌
+
+Agent 跑越多步，書桌越亂：每次 SQL 結果、每次錯誤訊息都堆在對話裡。高手會主動管理：
+
+- **限制工具輸出**：像 `run_sql` 只回 50 列，而不是整張表。
+- **摘要舊歷史**：對話太長時，把前面的內容壓成一段摘要。
+- **按需載入**：Skill 的分層設計就是這個思想。
+- **用 subagent 隔離**：髒活交給子 Agent，只把結論帶回主對話。
+
+<Checklist
+	id="agent-s7"
+	items={[
+		'跑 <code>s7_mini_rag.py</code>，把組好的 prompt 送給 Claude 看回答',
+		'問「net revenue 怎麼算？」，觀察關鍵字搜尋失敗，理解為什麼需要 embedding',
+		'（選做）安裝 chromadb，把 DOCS 換成向量搜尋版本，再問一次 net revenue',
+	]}
+/>
+
+<Quiz
+	id="agent-s7"
+	questions={[
+		{ q: '你只有 8 條指標定義要給 Agent 參考，最適合的做法是？', options: ['直接寫進 system prompt 或 Skill', '架一套向量資料庫做 RAG', '拿這 8 條去重新訓練模型'], answer: 0, explain: '資料量小，直接放進 context 最簡單也最準。RAG 是資料量大到放不下時的解法；重新訓練模型對這種需求完全不划算。' },
+	]}
+/>
